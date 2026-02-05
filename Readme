@@ -1,0 +1,393 @@
+Secure File Access Control System
+A comprehensive enterprise-grade file security platform powered by AI, Blockchain, and Military Encryption technologies.
+
+🌟 Overview
+Secure File Access Control is a sophisticated web application that provides advanced file security management with real-time threat detection, immutable audit trails, and military-grade encryption. The system offers role-based access control with separate interfaces for administrators and regular users.
+
+✨ Key Features
+🔐 Security & Authentication
+Role-based Access Control (Admin/User roles)
+
+Secure Login System with session management
+
+Military-grade AES-256 Encryption for file protection
+
+Password-protected file uploads with client-side encryption
+
+🤖 AI-Powered Threat Detection
+Real-time ML Analysis of uploaded files
+
+Multiple ML Models (Random Forest, SVM, Isolation Forest)
+
+Confidence Scoring for threat assessment
+
+Automated Risk Classification (Allow/Deny/Review)
+
+⛓️ Blockchain Integration
+Immutable Audit Trail for all file access events
+
+Transparent Activity Logging
+
+Tamper-proof Security Records
+
+Real-time Blockchain Status Monitoring
+
+📊 Dashboard & Management
+Admin Dashboard with comprehensive system statistics
+
+User Dashboard for file management and requests
+
+Real-time Analytics and activity monitoring
+
+Pending Request Management with approval workflow
+
+🚀 Technology Stack
+Frontend
+HTML5, CSS3, JavaScript (ES6+)
+
+Tailwind CSS for responsive UI design
+
+Three.js for advanced 3D background animations
+
+Chart.js for data visualization
+
+Backend Integration
+RESTful API architecture
+
+Real-time Data Fetching
+
+Form Data Handling with file uploads
+
+Error Handling and user feedback
+
+Security Features
+Input Sanitization and XSS prevention
+
+Secure File Upload with validation
+
+Memory Leak Prevention with interval management
+
+Session-based Authentication
+
+🎨 User Interface
+Visual Design
+Dark Theme with glass morphism effects
+
+Responsive Layout for all screen sizes
+
+Interactive 3D Background with digital plexus network
+
+Professional Color Scheme (Indigo, Blue, Purple gradients)
+
+Key Components
+Landing Page with feature showcase
+
+Authentication Views (Login/Signup)
+
+Admin Dashboard with multiple management pages
+
+User Dashboard with file operations
+
+Real-time Notifications and status indicators
+
+📁 Application Structure
+Views
+Landing View - Marketing and feature introduction
+
+Login View - User authentication
+
+Signup View - Account creation
+
+User Dashboard - File management interface
+
+Admin Dashboard - System administration
+
+User Dashboard Pages
+File Management - Upload and view files
+
+My Requests - Track file approval status
+
+My Activity - View access history
+
+Profile & Settings - Account management
+
+Admin Dashboard Pages
+System Stats - Real-time analytics and metrics
+
+Pending Requests - File approval management
+
+Approved Files - Access controlled files
+
+User Management - User administration
+
+Blockchain Log - Audit trail viewer
+
+Profile & Settings - Admin account management
+
+🔧 Installation & Setup
+Prerequisites
+Modern web browser with JavaScript enabled
+
+Backend API server (refer to backend documentation)
+
+Internet connection for CDN resources
+
+Quick Start
+Clone or download the project files
+
+Ensure backend API endpoints are configured
+
+Open index.html in a web browser
+
+Use demo credentials for testing:
+
+Admin: admin / admin
+
+User: user1 / user123
+
+File Structure
+text
+secure-file-access/
+├── index.html              # Main application file
+├── (backend files)         # Server-side components
+└── README.md              # This documentation
+🎯 Core Functionality
+File Upload Process
+Select File with encryption password
+
+Automatic ML Analysis for threat detection
+
+Admin Review and approval workflow
+
+Secure Storage with encryption
+
+Controlled Access with audit logging
+
+Admin Workflow
+Review Pending Requests with ML analysis results
+
+Approve/Reject Files with optional notes
+
+Monitor System Health and statistics
+
+Manage User Accounts and permissions
+
+View Blockchain Audit Trail
+
+User Workflow
+Upload Files with security password
+
+Track Request Status in real-time
+
+Download Approved Files securely
+
+View Personal Activity history
+
+Manage Account Settings
+
+🔒 Security Implementation
+Data Protection
+Client-side Encryption before file upload
+
+Secure API Communication with backend
+
+Input Validation and sanitization
+
+Session Management with proper logout
+
+Access Control
+Role-based Permissions
+
+File-level Security with individual passwords
+
+Audit Trail for all operations
+
+Real-time Monitoring of system access
+
+📊 Performance Features
+Optimization
+Efficient 3D Rendering with Three.js
+
+Memory Management with interval cleanup
+
+Responsive Design for various devices
+
+Caching Strategy for improved performance
+
+Real-time Updates
+Live Statistics with automatic refresh
+
+Instant Notifications for user actions
+
+Dynamic Content Loading without page reloads
+
+WebSocket-ready Architecture
+
+🎨 3D Background Features
+Digital Plexus Network
+Interactive Node System with 120 connected points
+
+Mouse-responsive Highlights and color changes
+
+Floating Animation with smooth transitions
+
+Security Logo Integration with breathing effect
+
+Visual Effects
+Additive Blending for glowing elements
+
+Depth Fog for atmospheric perspective
+
+Color Transitions based on interaction
+
+Performance-optimized Rendering
+
+🔄 API Integration
+Endpoints Used
+/api/login - User authentication
+
+/api/signup - Account creation
+
+/api/profile - User profile management
+
+/upload - File upload with ML analysis
+
+/api/admin/* - Administrative functions
+
+/api/user/* - User-specific operations
+
+/api/system_stats - System monitoring
+
+Data Flow
+Frontend Requests with proper authentication
+
+Backend Processing with ML analysis
+
+Real-time Updates to user interface
+
+Error Handling with user feedback
+
+🛠️ Development Notes
+Code Organization
+Modular JavaScript with clear separation of concerns
+
+CSS Utility Classes with Tailwind framework
+
+Comment-rich Code for maintainability
+
+Error Boundary Implementation
+
+Browser Compatibility
+Modern Browsers (Chrome, Firefox, Safari, Edge)
+
+Mobile Responsive design
+
+Progressive Enhancement approach
+
+📈 Future Enhancements
+Planned Features
+Two-Factor Authentication (2FA)
+
+Advanced File Preview capabilities
+
+Bulk Operations for file management
+
+Advanced Reporting and analytics
+
+Mobile Application development
+
+Technical Improvements
+Service Worker for offline functionality
+
+WebSocket Integration for real-time updates
+
+Advanced Caching strategies
+
+Performance Monitoring tools
+
+🤝 Contributing
+Development Guidelines
+Follow existing code style and structure
+
+Maintain security protocols and validation
+
+Test across different browsers and devices
+
+Document new features and changes
+
+Security Considerations
+Always validate and sanitize user input
+
+Implement proper error handling
+
+Maintain encryption standards
+
+Regular security audits recommended
+
+📄 License
+This project is designed for enterprise security applications. Please refer to the specific licensing terms provided with your deployment.
+
+🆘 Support
+For technical support or security concerns:
+
+Check the system documentation
+
+Review API integration guides
+
+Contact system administrators
+
+Report security issues through proper channels
+
+
+
+🚀 Quick Start
+Prerequisites
+Python 3.10 or higher
+
+pip (Python package manager)
+
+Modern web browser
+
+Installation & Setup
+Clone or Download the Project
+
+bash
+# If using git
+git clone <repository-url>
+cd secure-file-access-control
+
+# Or simply download and extract the zip file
+Set Up Python Environment (Recommended)
+
+bash
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+Install Dependencies
+
+bash
+pip install -r requirements.txt
+If requirements.txt is not available, install manually:
+
+bash
+pip install flask flask-sqlalchemy flask-login werkzeug cryptography
+Run the Application
+
+bash
+python app.py
+Access the Application
+
+Open your web browser
+
+Navigate to: http://localhost:5000
+
+Use demo credentials:
+
+Admin: admin / admin
+
+User: user1 / user123
