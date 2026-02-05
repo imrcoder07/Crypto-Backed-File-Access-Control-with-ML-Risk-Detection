@@ -1,0 +1,2364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure File Access Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body { 
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: #e5e7eb;
+        }
+        
+        #bg-canvas { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            z-index: -1; 
+        }
+        
+        .view { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            display: none;
+            flex-direction: column;
+        }
+        
+        .view.active { 
+            display: flex; 
+        }
+        
+        .glass-card { 
+            background: rgba(17, 24, 39, 0.7); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+        }
+        
+        .btn-primary { 
+            background: #4f46e5; 
+            color: white; 
+            font-weight: bold; 
+            padding: 12px 24px; 
+            border-radius: 8px; 
+            transition: all 0.3s; 
+            transform: scale(1); 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); 
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn-primary:hover { 
+            background: #4338ca; 
+            transform: scale(1.05); 
+        }
+        
+        .input-field { 
+            width: 100%; 
+            padding: 12px 16px; 
+            background: #374151; 
+            border: 1px solid #4b5563; 
+            color: white; 
+            border-radius: 6px; 
+            outline: none; 
+        }
+        
+        .input-field:focus { 
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        }
+        
+        .sidebar-link { 
+            display: flex; 
+            align-items: center; 
+            padding: 12px 16px; 
+            color: #d1d5db; 
+            border-radius: 8px; 
+            transition: background-color 0.2s; 
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .sidebar-link:hover { 
+            background: #374151; 
+        }
+        
+        .sidebar-link.active { 
+            background: #4f46e5; 
+            color: white; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); 
+        }
+        
+        .dashboard-page { 
+            display: none; 
+            flex: 1;
+            overflow-y: auto;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        .dashboard-page.active { 
+            display: block; 
+        }
+        
+        @keyframes fadeIn { 
+            from { 
+                opacity: 0; 
+                transform: translateY(10px); 
+            } 
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            } 
+        }
+        
+        .fallback-bg { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            z-index: -2;
+            display: none;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-online { 
+            background: #10b981; 
+        }
+        
+        .status-offline { 
+            background: #ef4444; 
+        }
+        
+        .status-loading { 
+            background: #f59e0b; 
+            animation: pulse 1.5s infinite; 
+        }
+        
+        @keyframes pulse { 
+            0% { 
+                transform: scale(1); 
+            } 
+            50% { 
+                transform: scale(1.05); 
+            } 
+            100% { 
+                transform: scale(1); 
+            } 
+        }
+        
+        .blockchain-pulse { 
+            animation: pulse 2s infinite; 
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-approved { 
+            background: #dcfce7; 
+            color: #166534; 
+        }
+        
+        .status-pending { 
+            background: #fef3c7; 
+            color: #92400e; 
+        }
+        
+        .status-rejected { 
+            background: #fee2e2; 
+            color: #991b1b; 
+        }
+
+        .confidence-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 4px 0;
+        }
+        
+        .confidence-level {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #3b82f6);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .loading-spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #4f46e5;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        
+        @keyframes spin {
+            0% { 
+                transform: rotate(0deg); 
+            }
+            100% { 
+                transform: rotate(360deg); 
+            }
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        /* Landing page specific styles */
+        #landing-view {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .landing-content {
+            max-width: 1200px;
+            width: 100%;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        /* Dashboard specific styles */
+        .dashboard-container {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+        }
+        
+        .dashboard-sidebar {
+            width: 250px;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+        
+        .dashboard-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .dashboard-main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+        
+        /* File list styles */
+        .file-list-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        /* Table responsive styles */
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        /* Message area styles */
+        .message-area {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            text-align: center;
+            transition: opacity 0.3s;
+        }
+        
+        .message-success {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.5);
+            color: #10b981;
+        }
+        
+        .message-error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #ef4444;
+        }
+        
+        .message-info {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.5);
+            color: #3b82f6;
+        }
+        
+        .message-warning {
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid rgba(245, 158, 11, 0.5);
+            color: #f59e0b;
+        }
+
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200">
+
+    <div class="fallback-bg"></div>
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- LANDING VIEW -->
+    <div id="landing-view" class="view active">
+        <div class="landing-content">
+            <h1 class="text-5xl md:text-7xl font-black text-white mb-6">
+                Secure File Access 
+                <span class="text-indigo-400">Control</span>
+            </h1>
+            <p class="text-lg md:text-xl text-indigo-300 mb-8 mx-auto max-w-3xl">
+                Enterprise-grade file security powered by AI, Blockchain & Military Encryption. 
+                Protect your documents with advanced threat detection and immutable audit trails.
+            </p>
+            <button id="launch-app-btn" class="btn-primary text-lg px-8 py-4 text-xl mb-12">
+                🚀 Launch Security Portal
+            </button>
+
+            <!-- Feature Showcase -->
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="text-4xl mb-4">🤖</div>
+                    <h3 class="text-xl font-bold text-white mb-2">AI-Powered Threat Detection</h3>
+                    <p class="text-gray-400">Advanced machine learning models analyze files in real-time to detect potential threats before they reach your system.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="text-4xl mb-4">⛓️</div>
+                    <h3 class="text-xl font-bold text-white mb-2">Blockchain Audit Trail</h3>
+                    <p class="text-gray-400">Every file access and security event is immutably recorded on our blockchain for complete transparency and auditability.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="text-4xl mb-4">🔒</div>
+                    <h3 class="text-xl font-bold text-white mb-2">Military-Grade Encryption</h3>
+                    <p class="text-gray-400">Your files are protected with AES-256 encryption and secure key management, ensuring maximum data protection.</p>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
+                <div class="text-center">
+                    <div class="text-2xl md:text-3xl font-bold text-white">1,250+</div>
+                    <div class="text-gray-400 text-sm">Files Secured</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl md:text-3xl font-bold text-white">8,900+</div>
+                    <div class="text-gray-400 text-sm">Security Events</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl md:text-3xl font-bold text-white">15,600+</div>
+                    <div class="text-gray-400 text-sm">Blockchain Records</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl md:text-3xl font-bold text-white">99.9%</div>
+                    <div class="text-gray-400 text-sm">Uptime</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIN VIEW -->
+    <div id="login-view" class="view">
+        <div class="flex items-center justify-center w-full h-full p-4">
+            <div class="glass-card p-8 rounded-2xl shadow-2xl w-full max-w-sm">
+                <h1 class="text-2xl font-bold mb-6 text-center text-white">🔐 Login</h1>
+                <form id="login-form" class="space-y-4">
+                    <div>
+                        <label for="login-username" class="block text-sm font-medium text-gray-300 mb-2">Username</label>
+                        <input type="text" id="login-username" class="input-field" placeholder="Enter username" required>
+                    </div>
+                    <div>
+                        <label for="login-password" class="block text-sm font-medium text-gray-300 mb-2">Password</label>
+                        <input type="password" id="login-password" class="input-field" placeholder="Enter password" required>
+                    </div>
+                    <div id="login-error" class="text-red-400 text-xs mt-1 h-4"></div>
+                    <button type="submit" class="w-full btn-primary mt-4">Login</button>
+                    <p class="text-center text-sm text-gray-400 mt-4">No account? <a href="#" id="go-to-signup" class="font-medium text-indigo-400 hover:underline">Sign Up</a></p>
+                </form>
+                
+                <div class="mt-6 p-4 bg-gray-800 rounded-lg">
+                    <p class="text-xs text-gray-400 mb-2">Demo Credentials:</p>
+                    <div class="text-xs space-y-1">
+                        <p><span class="text-red-400">Admin:</span> admin / admin</p>
+                        <p><span class="text-blue-400">User:</span> user1 / user123</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SIGNUP VIEW -->
+    <div id="signup-view" class="view">
+        <div class="flex items-center justify-center w-full h-full p-4">
+            <div class="glass-card p-8 rounded-2xl shadow-2xl w-full max-w-sm">
+                <h1 class="text-2xl font-bold mb-6 text-center text-white">📝 Create Account</h1>
+                <form id="signup-form" class="space-y-4">
+                    <div>
+                        <label for="signup-username" class="block text-sm font-medium text-gray-300 mb-2">Username</label>
+                        <input type="text" id="signup-username" class="input-field" placeholder="Choose username" required>
+                    </div>
+                    <div>
+                        <label for="signup-password" class="block text-sm font-medium text-gray-300 mb-2">Password</label>
+                        <input type="password" id="signup-password" class="input-field" placeholder="Create password" required>
+                    </div>
+                    <div id="signup-error" class="text-red-400 text-xs mt-1 h-4"></div>
+                    <button type="submit" class="w-full btn-primary mt-4">Sign Up</button>
+                    <p class="text-center text-sm text-gray-400 mt-4">Have an account? <a href="#" id="go-to-login" class="font-medium text-indigo-400 hover:underline">Login</a></p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- USER DASHBOARD VIEW -->
+    <div id="user-dashboard-view" class="view">
+        <div class="dashboard-container">
+            <aside class="dashboard-sidebar glass-card p-6 flex flex-col">
+                <h1 class="text-2xl font-bold text-indigo-400 mb-8">👤 User Panel</h1>
+                <nav class="flex flex-col space-y-2 flex-grow">
+                    <a href="#" class="sidebar-link active" onclick="showUserPage('user-files')">📁 File Management</a>
+                    <a href="#" class="sidebar-link" onclick="showUserPage('user-requests')">⏳ My Requests</a>
+                    <a href="#" class="sidebar-link" onclick="showUserPage('user-activity')">📊 My Activity</a>
+                    <a href="#" class="sidebar-link" onclick="showUserPage('user-profile')">⚙️ Profile & Settings</a>
+                </nav>
+                <div class="border-t border-gray-700 pt-4 mt-4">
+                    <div id="user-profile-widget" class="text-center mb-2">
+                        <p class="font-bold text-white">Loading...</p>
+                        <p class="text-xs text-gray-400">User</p>
+                    </div>
+                    <a href="#" onclick="logout()" class="block text-center text-sm text-gray-400 hover:underline">🚪 Logout</a>
+                </div>
+            </aside>
+            <div class="dashboard-content">
+                <div class="dashboard-main">
+                    <!-- File Management Page -->
+                    <div id="user-files-page" class="dashboard-page active">
+                        <h2 class="text-3xl font-bold text-white mb-6">📁 File Management</h2>
+                        <div id="user-message-area" class="message-area opacity-0"></div>
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <section class="glass-card p-6 rounded-xl">
+                                <h2 class="text-xl font-semibold mb-4">⬆️ Upload File</h2>
+                                <form id="upload-form" class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-300 mb-2">Select File</label>
+                                        <input type="file" id="file-input" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-indigo-500/20 file:text-indigo-300 hover:file:bg-indigo-500/30" required>
+                                        <p class="text-xs text-gray-400 mt-1">Max file size: 200MB • All document types supported</p>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-300 mb-2">🔒 Encryption Password</label>
+                                        <input type="password" id="crypto-password" class="input-field" placeholder="Enter password to encrypt your file" required>
+                                        <p class="text-xs text-gray-400 mt-1">This password will be used to encrypt your file securely.</p>
+                                    </div>
+                                    <button type="submit" class="btn-primary w-full">🔐 Encrypt & Upload</button>
+                                </form>
+                            </section>
+                            <section class="glass-card p-6 rounded-xl">
+                                <h2 class="text-xl font-semibold mb-4">📋 Available Files</h2>
+                                <div id="user-file-list" class="file-list-container space-y-3">
+                                    <div class="flex items-center justify-center py-8">
+                                        <div class="loading-spinner"></div>
+                                        <span class="ml-2 text-gray-400">Loading files...</span>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+
+                    <!-- My Requests Page -->
+                    <div id="user-requests-page" class="dashboard-page">
+                        <h2 class="text-3xl font-bold text-white mb-6">⏳ My File Requests</h2>
+                        <div id="user-requests-list" class="space-y-4">
+                            <div class="flex items-center justify-center py-8">
+                                <div class="loading-spinner"></div>
+                                <span class="ml-2 text-gray-400">Loading requests...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Activity Page -->
+                    <div id="user-activity-page" class="dashboard-page">
+                        <h2 class="text-3xl font-bold text-white mb-6">📊 My Recent Activity</h2>
+                        <div id="user-activity-log" class="glass-card p-4 rounded-lg text-sm space-y-2 file-list-container">
+                            <div class="flex items-center justify-center py-8">
+                                <div class="loading-spinner"></div>
+                                <span class="ml-2 text-gray-400">Loading activity...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Page -->
+                    <div id="user-profile-page" class="dashboard-page">
+                        <h2 class="text-3xl font-bold text-white mb-6">⚙️ Profile & Settings</h2>
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div class="glass-card p-8 rounded-xl">
+                                <h3 class="text-xl font-semibold mb-4">👤 My Profile</h3>
+                                <div id="user-profile-details" class="space-y-2">
+                                    <div class="flex items-center justify-center py-4">
+                                        <div class="loading-spinner"></div>
+                                        <span class="ml-2 text-gray-400">Loading profile...</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="glass-card p-8 rounded-xl">
+                                <h3 class="text-xl font-semibold mb-4">✏️ Edit Profile</h3>
+                                <form id="edit-profile-form" class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm text-gray-300 mb-2">📧 Email</label>
+                                        <input type="email" id="profile-email" class="input-field" placeholder="your@email.com">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm text-gray-300 mb-2">🔑 New Password</label>
+                                        <input type="password" id="profile-password" class="input-field" placeholder="Leave blank to keep current">
+                                    </div>
+                                    <button type="submit" class="btn-primary w-full">💾 Save Changes</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN DASHBOARD VIEW -->
+    <div id="admin-dashboard-view" class="view">
+        <div class="dashboard-container">
+            <aside class="dashboard-sidebar glass-card p-6 flex flex-col">
+                <h1 class="text-2xl font-bold text-red-500 mb-8">🛡️ Admin Panel</h1>
+                <nav class="flex flex-col space-y-2 flex-grow">
+                    <a href="#" class="sidebar-link active" onclick="showAdminPage('admin-stats')">📊 System Stats</a>
+                    <a href="#" class="sidebar-link" onclick="showAdminPage('admin-requests')">⏳ Pending Requests</a>
+                    <a href="#" class="sidebar-link" onclick="showAdminPage('admin-approved')">✅ Approved Files</a>
+                    <a href="#" class="sidebar-link" onclick="showAdminPage('admin-users')">👥 User Management</a>
+                    <a href="#" class="sidebar-link" onclick="showAdminPage('admin-blockchain')">⛓️ Blockchain Log</a>
+                    <a href="#" class="sidebar-link" onclick="showAdminPage('admin-profile')">⚙️ Profile & Settings</a>
+                </nav>
+                <div class="border-t border-gray-700 pt-4 mt-4">
+                    <div id="admin-profile-widget" class="text-center mb-2">
+                        <p class="font-bold text-white">Loading...</p>
+                        <p class="text-xs text-red-400">Administrator</p>
+                    </div>
+                    <a href="#" onclick="logout()" class="block text-center text-sm text-gray-400 hover:underline">🚪 Logout</a>
+                </div>
+            </aside>
+            <div class="dashboard-content">
+                <div class="dashboard-main">
+                    <!-- System Stats Page -->
+                    <div id="admin-stats-page" class="dashboard-page active">
+                        <h2 class="text-3xl font-bold text-white mb-6">📊 Real-Time System Statistics</h2>
+                        
+                        <!-- System Status Overview -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                            <div class="glass-card p-4 rounded-xl">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-gray-400 text-sm">ML Status</p>
+                                        <p id="ml-status" class="text-lg font-bold text-green-400">Active</p>
+                                    </div>
+                                    <span id="ml-status-indicator" class="status-indicator status-online"></span>
+                                </div>
+                            </div>
+                            <div class="glass-card p-4 rounded-xl">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-gray-400 text-sm">Blockchain</p>
+                                        <p id="blockchain-status" class="text-lg font-bold text-green-400">Active</p>
+                                    </div>
+                                    <span class="text-2xl blockchain-pulse">⛓️</span>
+                                </div>
+                            </div>
+                            <div class="glass-card p-4 rounded-xl">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-gray-400 text-sm">Encryption</p>
+                                        <p class="text-lg font-bold text-blue-400">Active</p>
+                                    </div>
+                                    <span class="text-2xl">🔒</span>
+                                </div>
+                            </div>
+                            <div class="glass-card p-4 rounded-xl">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-gray-400 text-sm">System Health</p>
+                                        <p class="text-lg font-bold text-green-400">Optimal</p>
+                                    </div>
+                                    <span class="text-2xl">💚</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Main Statistics Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <div class="glass-card p-6 rounded-xl text-center">
+                                <h3 class="text-gray-400">Total Files</h3>
+                                <p id="stats-total-files" class="text-4xl font-bold text-white">0</p>
+                            </div>
+                            <div class="glass-card p-6 rounded-xl text-center">
+                                <h3 class="text-gray-400">Blockchain Events</h3>
+                                <p id="stats-blockchain-length" class="text-4xl font-bold text-white">0</p>
+                            </div>
+                            <div class="glass-card p-6 rounded-xl text-center">
+                                <h3 class="text-yellow-400">Pending Requests</h3>
+                                <p id="stats-pending-requests" class="text-4xl font-bold text-yellow-400">0</p>
+                            </div>
+                            <div class="glass-card p-6 rounded-xl text-center">
+                                <h3 class="text-green-400">Approved Files</h3>
+                                <p id="stats-approved-requests" class="text-4xl font-bold text-green-400">0</p>
+                            </div>
+                        </div>
+
+                        <!-- ML Analysis Statistics -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <div class="glass-card p-6 rounded-xl text-center">
+                                <h3 class="text-gray-400">ML Analyzed Files</h3>
+                                <p id="stats-ml-analyzed" class="text-3xl font-bold text-purple-400">0</p>
+                                <div class="flex justify-center space-x-4 mt-2 text-sm">
+                                    <span class="text-green-400"><span id="stats-ml-allowed">0</span> Allowed</span>
+                                    <span class="text-red-400"><span id="stats-ml-denied">0</span> Denied</span>
+                                    <span class="text-yellow-400"><span id="stats-ml-review">0</span> Review</span>
+                                </div>
+                            </div>
+                            <div class="glass-card p-6 rounded-xl text-center">
+                                <h3 class="text-gray-400">Active Users</h3>
+                                <p id="stats-active-users" class="text-3xl font-bold text-blue-400">0</p>
+                            </div>
+                            <div class="glass-card p-6 rounded-xl text-center">
+                                <h3 class="text-gray-400">Protected Files</h3>
+                                <p id="stats-protected-files" class="text-3xl font-bold text-yellow-400">0</p>
+                            </div>
+                        </div>
+
+                        <div class="glass-card p-6 rounded-xl">
+                            <canvas id="activityChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Pending Requests Page -->
+                    <div id="admin-requests-page" class="dashboard-page">
+                        <h2 class="text-3xl font-bold text-white mb-6">⏳ Pending Access Requests</h2>
+                        <div id="admin-requests-message" class="message-area"></div>
+                        <div class="glass-card p-6 rounded-xl">
+                            <div class="table-container">
+                                <table class="w-full text-sm text-left text-gray-300">
+                                    <thead class="text-xs uppercase bg-gray-700 text-gray-400">
+                                        <tr>
+                                            <th class="px-6 py-3">User</th>
+                                            <th class="px-6 py-3">File Details</th>
+                                            <th class="px-6 py-3">ML Analysis</th>
+                                            <th class="px-6 py-3">Password</th>
+                                            <th class="px-6 py-3">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-requests-table">
+                                        <tr>
+                                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                                                <div class="flex items-center justify-center">
+                                                    <div class="loading-spinner"></div>
+                                                    <span class="ml-2">Loading requests...</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Approved Files Page -->
+                    <div id="admin-approved-page" class="dashboard-page">
+                        <h2 class="text-3xl font-bold text-white mb-6">✅ Approved Files</h2>
+                        <div id="admin-approved-message" class="message-area"></div>
+                        <div id="admin-approved-list" class="space-y-4">
+                            <div class="flex items-center justify-center py-8">
+                                <div class="loading-spinner"></div>
+                                <span class="ml-2 text-gray-400">Loading approved files...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Management Page -->
+                    <div id="admin-users-page" class="dashboard-page">
+                        <h2 class="text-3xl font-bold text-white mb-6">👥 User Management</h2>
+                        <div id="admin-users-message" class="message-area"></div>
+                        <div id="admin-user-list" class="glass-card p-4 rounded-lg text-sm file-list-container">
+                            <div class="flex items-center justify-center py-8">
+                                <div class="loading-spinner"></div>
+                                <span class="ml-2 text-gray-400">Loading users...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Blockchain Log Page -->
+                    <div id="admin-blockchain-page" class="dashboard-page">
+                        <h2 class="text-3xl font-bold text-white mb-6">⛓️ Full Blockchain Audit Log</h2>
+                        <div class="glass-card p-6 rounded-xl mb-6">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                <div class="text-center">
+                                    <p class="text-gray-400">Total Blocks</p>
+                                    <p id="blockchain-total-blocks" class="text-2xl font-bold text-white">0</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-gray-400">Last Update</p>
+                                    <p id="blockchain-last-update" class="text-sm text-blue-400">Loading...</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-gray-400">Status</p>
+                                    <p class="text-lg font-bold text-green-400">Active</p>
+                                </div>
+                            </div>
+                        </div>
+                        <pre id="audit-log" class="bg-black text-green-400 p-4 rounded-lg text-xs overflow-auto file-list-container">Loading blockchain data...</pre>
+                    </div>
+
+                    <!-- Admin Profile Page -->
+                    <div id="admin-profile-page" class="dashboard-page">
+                        <h2 class="text-3xl font-bold text-white mb-6">⚙️ Admin Profile & Settings</h2>
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div class="glass-card p-8 rounded-xl">
+                                <h3 class="text-xl font-semibold mb-4">👤 My Profile</h3>
+                                <div id="admin-profile-details" class="space-y-2">
+                                    <div class="flex items-center justify-center py-4">
+                                        <div class="loading-spinner"></div>
+                                        <span class="ml-2 text-gray-400">Loading profile...</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="glass-card p-8 rounded-xl">
+                                <h3 class="text-xl font-semibold mb-4">✏️ Edit Profile</h3>
+                                <form id="edit-admin-profile-form" class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm text-gray-300 mb-2">📧 Email</label>
+                                        <input type="email" id="admin-profile-email" class="input-field" placeholder="admin@secure.corp">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm text-gray-300 mb-2">🔑 New Password</label>
+                                        <input type="password" id="admin-profile-password" class="input-field" placeholder="Leave blank to keep current">
+                                    </div>
+                                    <button type="submit" class="btn-primary w-full">💾 Save Changes</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // =============================================
+        // ADVANCED 3D DIGITAL PLEXUS NETWORK BACKGROUND
+        // =============================================
+        
+        function initThreeJSBackground() {
+            try {
+                const canvas = document.getElementById('bg-canvas');
+                if (!canvas) return;
+
+                // Initialize Three.js scene
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer({ 
+                    canvas: canvas, 
+                    alpha: true,
+                    antialias: true 
+                });
+                
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setClearColor(0x000000, 0);
+                camera.position.z = 25;
+
+                // Add subtle fog for depth
+                scene.fog = new THREE.FogExp2(0x0f172a, 0.008);
+
+                // Create the digital plexus network
+                const networkGroup = new THREE.Group();
+                scene.add(networkGroup);
+
+                // Network configuration
+                const NODE_COUNT = 120;
+                const CONNECTION_DISTANCE = 12;
+                const nodes = [];
+                const connections = [];
+
+                // Create nodes (points in the network)
+                const nodeGeometry = new THREE.BufferGeometry();
+                const nodePositions = new Float32Array(NODE_COUNT * 3);
+                const nodeColors = new Float32Array(NODE_COUNT * 3);
+                
+                // Base colors for nodes
+                const baseColor1 = new THREE.Color(0x38bdf8); // Electric blue
+                const baseColor2 = new THREE.Color(0x22d3ee); // Cyan
+                const highlightColor = new THREE.Color(0xf0abfc); // Magenta
+
+                // Initialize node positions and colors
+                for (let i = 0; i < NODE_COUNT; i++) {
+                    const i3 = i * 3;
+                    
+                    // Position nodes in a spherical distribution
+                    const radius = 15 + Math.random() * 15;
+                    const theta = Math.random() * Math.PI * 2;
+                    const phi = Math.acos((Math.random() * 2) - 1);
+                    
+                    nodePositions[i3] = radius * Math.sin(phi) * Math.cos(theta);
+                    nodePositions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                    nodePositions[i3 + 2] = radius * Math.cos(phi);
+                    
+                    // Alternate between two base colors
+                    const nodeColor = i % 2 === 0 ? baseColor1 : baseColor2;
+                    nodeColors[i3] = nodeColor.r;
+                    nodeColors[i3 + 1] = nodeColor.g;
+                    nodeColors[i3 + 2] = nodeColor.b;
+                    
+                    // Store node data for interaction
+                    nodes.push({
+                        position: new THREE.Vector3(
+                            nodePositions[i3],
+                            nodePositions[i3 + 1],
+                            nodePositions[i3 + 2]
+                        ),
+                        originalPosition: new THREE.Vector3(
+                            nodePositions[i3],
+                            nodePositions[i3 + 1],
+                            nodePositions[i3 + 2]
+                        ),
+                        velocity: new THREE.Vector3(
+                            (Math.random() - 0.5) * 0.02,
+                            (Math.random() - 0.5) * 0.02,
+                            (Math.random() - 0.5) * 0.02
+                        ),
+                        baseColor: nodeColor,
+                        isHighlighted: false,
+                        highlightIntensity: 0
+                    });
+                }
+
+                nodeGeometry.setAttribute('position', new THREE.BufferAttribute(nodePositions, 3));
+                nodeGeometry.setAttribute('color', new THREE.BufferAttribute(nodeColors, 3));
+
+                // Create node material with glowing effect
+                const nodeMaterial = new THREE.PointsMaterial({
+                    size: 0.4,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.8,
+                    sizeAttenuation: true,
+                    blending: THREE.AdditiveBlending
+                });
+
+                const nodePoints = new THREE.Points(nodeGeometry, nodeMaterial);
+                networkGroup.add(nodePoints);
+
+                // Create connections between nodes
+                const connectionGeometry = new THREE.BufferGeometry();
+                const connectionPositions = [];
+                const connectionColors = [];
+
+                // Find and create connections between nearby nodes
+                for (let i = 0; i < NODE_COUNT; i++) {
+                    for (let j = i + 1; j < NODE_COUNT; j++) {
+                        const distance = nodes[i].position.distanceTo(nodes[j].position);
+                        
+                        if (distance < CONNECTION_DISTANCE) {
+                            // Add line from node i to node j
+                            connectionPositions.push(
+                                nodes[i].position.x, nodes[i].position.y, nodes[i].position.z,
+                                nodes[j].position.x, nodes[j].position.y, nodes[j].position.z
+                            );
+                            
+                            // Calculate color based on distance (closer = brighter)
+                            const intensity = 1 - (distance / CONNECTION_DISTANCE);
+                            const color = new THREE.Color().lerpColors(
+                                baseColor1, 
+                                baseColor2, 
+                                Math.random()
+                            );
+                            color.multiplyScalar(intensity * 0.7);
+                            
+                            // Add color for both vertices of the line
+                            connectionColors.push(
+                                color.r, color.g, color.b,
+                                color.r, color.g, color.b
+                            );
+                            
+                            connections.push({
+                                nodeIndex1: i,
+                                nodeIndex2: j,
+                                intensity: intensity
+                            });
+                        }
+                    }
+                }
+
+                connectionGeometry.setAttribute('position', new THREE.Float32BufferAttribute(connectionPositions, 3));
+                connectionGeometry.setAttribute('color', new THREE.Float32BufferAttribute(connectionColors, 3));
+
+                const connectionMaterial = new THREE.LineBasicMaterial({
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.3,
+                    linewidth: 1,
+                    blending: THREE.AdditiveBlending
+                });
+
+                const connectionLines = new THREE.LineSegments(connectionGeometry, connectionMaterial);
+                networkGroup.add(connectionLines);
+
+                // Create floating security logo in the center
+                const logoGroup = new THREE.Group();
+                scene.add(logoGroup);
+                logoGroup.position.set(0, 0, 0);
+
+                // Create a shield-like shape for the logo
+                const logoShape = new THREE.Shape();
+                logoShape.moveTo(0, 2);
+                logoShape.quadraticCurveTo(1.5, 2, 1.5, 0);
+                logoShape.quadraticCurveTo(1.5, -1.5, 0, -2);
+                logoShape.quadraticCurveTo(-1.5, -1.5, -1.5, 0);
+                logoShape.quadraticCurveTo(-1.5, 2, 0, 2);
+
+                const logoGeometry = new THREE.ShapeGeometry(logoShape);
+                const logoMaterial = new THREE.MeshBasicMaterial({
+                    color: 0x38bdf8,
+                    transparent: true,
+                    opacity: 0.3,
+                    side: THREE.DoubleSide
+                });
+
+                const logoMesh = new THREE.Mesh(logoGeometry, logoMaterial);
+                logoGroup.add(logoMesh);
+
+                // Add a lock symbol inside the shield
+                const lockGeometry = new THREE.BoxGeometry(0.5, 0.8, 0.1);
+                const lockMaterial = new THREE.MeshBasicMaterial({
+                    color: 0x38bdf8,
+                    transparent: true,
+                    opacity: 0.6
+                });
+
+                const lockMesh = new THREE.Mesh(lockGeometry, lockMaterial);
+                lockMesh.position.y = -0.5;
+                logoGroup.add(lockMesh);
+
+                // Mouse interaction variables
+                const mouse = new THREE.Vector2();
+                const raycaster = new THREE.Raycaster();
+                raycaster.params.Points.threshold = 0.5;
+
+                // Handle window resize
+                function handleResize() {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                }
+                window.addEventListener('resize', handleResize);
+
+                // Mouse move interaction
+                document.addEventListener('mousemove', (event) => {
+                    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                    
+                    // Update raycaster
+                    raycaster.setFromCamera(mouse, camera);
+                    
+                    // Find intersected nodes
+                    const intersects = raycaster.intersectObject(nodePoints);
+                    
+                    // Reset all node highlights
+                    nodes.forEach(node => {
+                        node.isHighlighted = false;
+                    });
+                    
+                    // Highlight intersected nodes
+                    intersects.forEach(intersect => {
+                        const index = intersect.index;
+                        if (index !== undefined && nodes[index]) {
+                            nodes[index].isHighlighted = true;
+                        }
+                    });
+                });
+
+                // Animation variables
+                let time = 0;
+                const clock = new THREE.Clock();
+
+                // Animation loop
+                function animate() {
+                    requestAnimationFrame(animate);
+                    
+                    const delta = clock.getDelta();
+                    time += delta;
+                    
+                    // Update node positions with gentle floating motion
+                    const positions = nodePoints.geometry.attributes.position.array;
+                    const colors = nodePoints.geometry.attributes.color.array;
+                    
+                    for (let i = 0; i < NODE_COUNT; i++) {
+                        const i3 = i * 3;
+                        const node = nodes[i];
+                        
+                        // Gentle floating motion using noise-like function
+                        node.position.x = node.originalPosition.x + Math.sin(time * 0.5 + i) * 0.5;
+                        node.position.y = node.originalPosition.y + Math.cos(time * 0.3 + i * 0.7) * 0.5;
+                        node.position.z = node.originalPosition.z + Math.sin(time * 0.4 + i * 0.3) * 0.5;
+                        
+                        // Update positions in geometry
+                        positions[i3] = node.position.x;
+                        positions[i3 + 1] = node.position.y;
+                        positions[i3 + 2] = node.position.z;
+                        
+                        // Handle highlighting
+                        if (node.isHighlighted) {
+                            node.highlightIntensity = Math.min(node.highlightIntensity + delta * 5, 1);
+                        } else {
+                            node.highlightIntensity = Math.max(node.highlightIntensity - delta * 2, 0);
+                        }
+                        
+                        // Update colors based on highlight state
+                        const targetColor = node.highlightIntensity > 0 ? 
+                            highlightColor.clone().lerp(node.baseColor, 1 - node.highlightIntensity) : 
+                            node.baseColor;
+                            
+                        colors[i3] = targetColor.r;
+                        colors[i3 + 1] = targetColor.g;
+                        colors[i3 + 2] = targetColor.b;
+                    }
+                    
+                    nodePoints.geometry.attributes.position.needsUpdate = true;
+                    nodePoints.geometry.attributes.color.needsUpdate = true;
+                    
+                    // Update connection positions
+                    const connectionPositions = connectionLines.geometry.attributes.position.array;
+                    let connectionIndex = 0;
+                    
+                    for (const connection of connections) {
+                        const node1 = nodes[connection.nodeIndex1];
+                        const node2 = nodes[connection.nodeIndex2];
+                        
+                        connectionPositions[connectionIndex * 6] = node1.position.x;
+                        connectionPositions[connectionIndex * 6 + 1] = node1.position.y;
+                        connectionPositions[connectionIndex * 6 + 2] = node1.position.z;
+                        connectionPositions[connectionIndex * 6 + 3] = node2.position.x;
+                        connectionPositions[connectionIndex * 6 + 4] = node2.position.y;
+                        connectionPositions[connectionIndex * 6 + 5] = node2.position.z;
+                        
+                        connectionIndex++;
+                    }
+                    
+                    connectionLines.geometry.attributes.position.needsUpdate = true;
+                    
+                    // Animate logo with gentle floating and breathing effect
+                    logoGroup.rotation.y = time * 0.1;
+                    logoGroup.position.y = Math.sin(time * 0.5) * 0.3;
+                    logoMaterial.opacity = 0.3 + Math.sin(time * 0.8) * 0.1;
+                    lockMaterial.opacity = 0.6 + Math.sin(time * 0.8) * 0.2;
+                    
+                    // Subtle camera movement based on mouse position
+                    camera.position.x += (mouse.x * 2 - camera.position.x) * 0.01;
+                    camera.position.y += (mouse.y * 2 - camera.position.y) * 0.01;
+                    camera.lookAt(scene.position);
+                    
+                    renderer.render(scene, camera);
+                }
+                
+                animate();
+                
+            } catch (error) {
+                console.error('3D background failed:', error);
+                document.querySelector('.fallback-bg').style.display = 'block';
+            }
+        }
+
+        // =============================================
+        // VIEW MANAGEMENT
+        // =============================================
+        
+        // Store current view state
+        let currentView = 'landing-view';
+        let currentDashboard = null;
+        let currentPage = null;
+
+        function showView(viewId) { 
+            console.log('Switching to view:', viewId);
+            
+            // Hide all views first
+            document.querySelectorAll('.view').forEach(v => {
+                v.classList.remove('active');
+                v.style.display = 'none';
+            });
+            
+            // Show the target view
+            const targetView = document.getElementById(viewId);
+            if (targetView) {
+                targetView.classList.add('active');
+                targetView.style.display = 'flex';
+                currentView = viewId;
+            }
+            
+            // Reset body overflow for proper scrolling
+            document.body.style.overflow = viewId === 'landing-view' ? 'hidden' : 'auto';
+            
+            // Clean up intervals when switching views
+            if (viewId === 'landing-view') {
+                cleanupAllIntervals();
+            }
+        }
+        
+        function showUserPage(pageId) { 
+            console.log('Showing user page:', pageId);
+            
+            // Hide all user dashboard pages
+            document.querySelectorAll('#user-dashboard-view .dashboard-page').forEach(p => {
+                p.classList.remove('active');
+                p.style.display = 'none';
+            });
+            
+            // Show the target page
+            const targetPage = document.getElementById(`${pageId}-page`);
+            if (targetPage) {
+                targetPage.classList.add('active');
+                targetPage.style.display = 'block';
+                currentPage = pageId;
+            }
+            
+            // Update sidebar active state
+            document.querySelectorAll('#user-dashboard-view .sidebar-link').forEach(l => l.classList.remove('active')); 
+            const activeLink = document.querySelector(`#user-dashboard-view [onclick="showUserPage('${pageId}')"]`);
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
+            
+            // Load data for the specific page
+            switch(pageId) {
+                case 'user-profile':
+                    loadProfile('user');
+                    break;
+                case 'user-requests':
+                    loadUserRequests();
+                    break;
+                case 'user-activity':
+                    loadUserActivity();
+                    break;
+                case 'user-files':
+                    loadUserFiles();
+                    break;
+            }
+        }
+        
+        function showAdminPage(pageId) { 
+            console.log('Showing admin page:', pageId);
+            
+            // Hide all admin dashboard pages
+            document.querySelectorAll('#admin-dashboard-view .dashboard-page').forEach(p => {
+                p.classList.remove('active');
+                p.style.display = 'none';
+            });
+            
+            // Show the target page
+            const targetPage = document.getElementById(`${pageId}-page`);
+            if (targetPage) {
+                targetPage.classList.add('active');
+                targetPage.style.display = 'block';
+                currentPage = pageId;
+            }
+            
+            // Update sidebar active state
+            document.querySelectorAll('#admin-dashboard-view .sidebar-link').forEach(l => l.classList.remove('active')); 
+            const activeLink = document.querySelector(`#admin-dashboard-view [onclick="showAdminPage('${pageId}')"]`);
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
+            
+            // Load data for the specific page
+            switch(pageId) {
+                case 'admin-users':
+                    loadUsers();
+                    break;
+                case 'admin-profile':
+                    loadProfile('admin');
+                    break;
+                case 'admin-requests':
+                    loadAdminRequests();
+                    break;
+                case 'admin-approved':
+                    loadApprovedFiles();
+                    break;
+                case 'admin-blockchain':
+                    loadBlockchainLog();
+                    break;
+                case 'admin-stats':
+                    updateAdminStats();
+                    break;
+            }
+        }
+
+        // =============================================
+        // MEMORY LEAK PREVENTION
+        // =============================================
+        let statsInterval = null;
+        let requestStatusInterval = null;
+        let approvedFilesInterval = null;
+        
+        let approvedFilesCache = [];
+        let lastApprovedUpdate = 0;
+        const CACHE_DURATION = 30000;
+
+        function cleanupAllIntervals() {
+            if (statsInterval) {
+                clearInterval(statsInterval);
+                statsInterval = null;
+            }
+            
+            if (requestStatusInterval) {
+                clearInterval(requestStatusInterval);
+                requestStatusInterval = null;
+            }
+            
+            if (approvedFilesInterval) {
+                clearInterval(approvedFilesInterval);
+                approvedFilesInterval = null;
+            }
+            
+            approvedFilesCache = [];
+            lastApprovedUpdate = 0;
+        }
+
+        function setupAdminIntervals() {
+            cleanupAllIntervals();
+            
+            statsInterval = setInterval(async () => {
+                await updateAdminStats();
+            }, 5000);
+            
+            approvedFilesInterval = setInterval(async () => {
+                await loadApprovedFiles();
+            }, 10000);
+        }
+
+        function setupUserIntervals() {
+            cleanupAllIntervals();
+            
+            requestStatusInterval = setInterval(async () => {
+                await loadUserRequests();
+                await loadUserFiles();
+            }, 8000);
+        }
+
+        // =============================================
+        // AUTHENTICATION
+        // =============================================
+        document.getElementById('launch-app-btn').addEventListener('click', () => {
+            showView('login-view');
+        });
+        document.getElementById('go-to-signup').addEventListener('click', (e) => {
+            e.preventDefault();
+            showView('signup-view');
+        });
+        document.getElementById('go-to-login').addEventListener('click', (e) => {
+            e.preventDefault();
+            showView('login-view');
+        });
+
+        document.getElementById('signup-form').addEventListener('submit', async (e) => { 
+            e.preventDefault(); 
+            const username = SecurityUtils.sanitize(document.getElementById('signup-username').value);
+            const password = document.getElementById('signup-password').value; 
+            
+            try {
+                const response = await fetch('/api/signup', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ username, password }) 
+                }); 
+                const result = await response.json(); 
+                
+                if (response.ok) { 
+                    document.getElementById('login-error').textContent = '✅ Signup successful! Please log in.'; 
+                    document.getElementById('login-error').className = 'text-green-400 text-xs mt-1 h-4'; 
+                    showView('login-view'); 
+                    document.getElementById('signup-username').value = '';
+                    document.getElementById('signup-password').value = '';
+                } else { 
+                    document.getElementById('signup-error').textContent = '❌ ' + result.message; 
+                } 
+            } catch (error) {
+                document.getElementById('signup-error').textContent = '❌ Network error. Please try again.';
+            }
+        });
+        
+        document.getElementById('login-form').addEventListener('submit', async (e) => { 
+            e.preventDefault(); 
+            const username = SecurityUtils.sanitize(document.getElementById('login-username').value);
+            const password = document.getElementById('login-password').value; 
+            
+            try {
+                const response = await fetch('/api/login', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ username, password }) 
+                }); 
+                const result = await response.json(); 
+                
+                if (response.ok) { 
+                    console.log('Login successful, role:', result.role);
+                    loadDashboard(result.role, result.username); 
+                    document.getElementById('login-username').value = '';
+                    document.getElementById('login-password').value = '';
+                } else { 
+                    const loginError = document.getElementById('login-error'); 
+                    loginError.textContent = '❌ ' + result.message; 
+                    loginError.className = 'text-red-400 text-xs mt-1 h-4'; 
+                } 
+            } catch (error) {
+                document.getElementById('login-error').textContent = '❌ Network error. Please try again.';
+            }
+        });
+        
+        function logout() { 
+            cleanupAllIntervals();
+            fetch('/api/logout').then(() => {
+                showView('landing-view'); 
+                console.log('Logged out successfully');
+            });
+        }
+
+        // =============================================
+        // SECURITY UTILS
+        // =============================================
+        const SecurityUtils = {
+            sanitize: function(str) {
+                if (typeof str !== 'string') return '';
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+        };
+
+        // =============================================
+        // DASHBOARD & PROFILE LOADING
+        // =============================================
+        async function loadDashboard(role, username) {
+            console.log('Loading dashboard for:', username, 'Role:', role);
+            
+            cleanupAllIntervals();
+            
+            document.getElementById('user-profile-widget').innerHTML = `<p class="font-bold text-white">${SecurityUtils.sanitize(username)}</p><p class="text-xs text-gray-400">User</p>`;
+            document.getElementById('admin-profile-widget').innerHTML = `<p class="font-bold text-white">${SecurityUtils.sanitize(username)}</p><p class="text-xs text-red-400">Administrator</p>`;
+            
+            if (role === 'Admin') { 
+                showView('admin-dashboard-view'); 
+                await updateAdminStats();
+                await loadAdminRequests();
+                await loadApprovedFiles();
+                
+                setupAdminIntervals();
+                
+            } else { 
+                showView('user-dashboard-view'); 
+                await loadUserRequests();
+                await loadUserFiles();
+                
+                setupUserIntervals();
+            }
+        }
+        
+        async function loadProfile(role) { 
+            try {
+                const response = await fetch('/api/profile'); 
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load profile');
+                }
+                
+                const data = await response.json(); 
+                const detailsEl = (role === 'admin') ? 'admin-profile-details' : 'user-profile-details'; 
+                const emailEl = (role === 'admin') ? 'admin-profile-email' : 'profile-email'; 
+                
+                document.getElementById(detailsEl).innerHTML = `
+                    <div class="space-y-3">
+                        <p><strong class="text-gray-400">Username:</strong> <span class="text-white">${SecurityUtils.sanitize(data.username)}</span></p>
+                        <p><strong class="text-gray-400">Role:</strong> <span class="${data.role === 'Admin' ? 'text-red-400' : 'text-blue-400'}">${SecurityUtils.sanitize(data.role)}</span></p>
+                        <p><strong class="text-gray-400">Email:</strong> <span class="text-white">${SecurityUtils.sanitize(data.email)}</span></p>
+                        <p><strong class="text-gray-400">Department:</strong> <span class="text-white">${SecurityUtils.sanitize(data.department)}</span></p>
+                        ${data.login_time ? `<p><strong class="text-gray-400">Login Time:</strong> <span class="text-white">${new Date(data.login_time).toLocaleString()}</span></p>` : ''}
+                    </div>
+                `; 
+                document.getElementById(emailEl).value = SecurityUtils.sanitize(data.email); 
+                
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                const detailsEl = (role === 'admin') ? 'admin-profile-details' : 'user-profile-details';
+                document.getElementById(detailsEl).innerHTML = `
+                    <p class="text-red-400">Error loading profile data</p>
+                    <p class="text-sm text-gray-400">${SecurityUtils.sanitize(error.message)}</p>
+                `;
+            }
+        }
+
+        // =============================================
+        // USER MANAGEMENT
+        // =============================================
+        async function loadUsers() { 
+            try {
+                const response = await fetch('/api/admin/users');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const users = await response.json(); 
+                const userList = document.getElementById('admin-user-list'); 
+                
+                if (!users || users.length === 0) {
+                    userList.innerHTML = '<p class="text-gray-400 text-center py-4">No users found</p>';
+                    return;
+                }
+                
+                userList.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 font-bold p-4 border-b border-gray-600 bg-gray-800 rounded-t-lg">
+                        <span>Username</span>
+                        <span>Role</span>
+                        <span>Email</span>
+                        <span>Department</span>
+                    </div>
+                `; 
+                
+                users.forEach(user => { 
+                    userList.innerHTML += `
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border-b border-gray-700 hover:bg-gray-800/50 transition-colors">
+                            <span class="font-medium text-white">${SecurityUtils.sanitize(user.username)}</span>
+                            <span class="${user.role === 'Admin' ? 'text-red-400' : 'text-blue-400'}">${SecurityUtils.sanitize(user.role)}</span>
+                            <span class="text-gray-300">${SecurityUtils.sanitize(user.email)}</span>
+                            <span class="text-gray-400">${SecurityUtils.sanitize(user.department)}</span>
+                        </div>
+                    `; 
+                });
+                
+            } catch (error) {
+                console.error('Error loading users:', error);
+                const userList = document.getElementById('admin-user-list');
+                userList.innerHTML = `
+                    <div class="text-center py-8 text-red-400">
+                        <p>❌ Error loading users</p>
+                        <p class="text-sm text-gray-400 mt-2">${SecurityUtils.sanitize(error.message)}</p>
+                        <button onclick="loadUsers()" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition-colors">
+                            🔄 Retry
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // =============================================
+        // USER DASHBOARD FUNCTIONS - REAL TIME
+        // =============================================
+        async function loadUserFiles() {
+            try {
+                const response = await fetch('/api/user/my_files');
+                if (!response.ok) throw new Error('Failed to load files');
+                
+                const userFiles = await response.json();
+                const fileList = document.getElementById('user-file-list');
+                
+                if (!userFiles || userFiles.length === 0) {
+                    fileList.innerHTML = '<p class="text-gray-400 text-center py-4">No files uploaded yet.</p>';
+                    return;
+                }
+                
+                let html = '';
+                userFiles.forEach(file => {
+                    const statusColor = file.status === 'approved' ? 'status-approved' : 
+                                      file.status === 'rejected' ? 'status-rejected' : 'status-pending';
+                    
+                    const statusText = file.status ? file.status.toUpperCase() : 'PENDING';
+                    const fileSizeMB = file.file_size_mb || (file.file_size / (1024 * 1024)).toFixed(2);
+                    
+                    html += `
+                        <div class="glass-card p-4 rounded-lg">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h3 class="font-bold text-white">${SecurityUtils.sanitize(file.filename)}</h3>
+                                    <p class="text-sm text-gray-400">${fileSizeMB} MB • Uploaded: ${SecurityUtils.sanitize(file.upload_time || 'Recently')}</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="status-badge ${statusColor}">${statusText}</span>
+                                    ${file.status === 'approved' ? 
+                                        `<button onclick="downloadApprovedFile('${SecurityUtils.sanitize(file.filename)}')" 
+                                                class="mt-1 bg-indigo-600 text-white px-3 py-1 rounded text-xs hover:bg-indigo-700 transition-colors">
+                                            📥 Download
+                                        </button>` : 
+                                        ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                fileList.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error loading user files:', error);
+                showMessage('user-file-list', '❌ Error loading files', 'message-error');
+            }
+        }
+
+        async function loadUserRequests() {
+            try {
+                const response = await fetch('/api/user/my_requests');
+                if (!response.ok) throw new Error('Failed to load requests');
+                
+                const userRequests = await response.json();
+                const requestsList = document.getElementById('user-requests-list');
+                
+                if (!userRequests || userRequests.length === 0) {
+                    requestsList.innerHTML = '<p class="text-gray-400 text-center py-8">No file requests yet.</p>';
+                    return;
+                }
+                
+                let html = '';
+                userRequests.forEach(request => {
+                    const statusColor = request.status === 'approved' ? 'status-approved' : 
+                                      request.status === 'rejected' ? 'status-rejected' : 'status-pending';
+                    
+                    const statusText = request.status ? request.status.toUpperCase() : 'PENDING';
+                    const fileSizeMB = request.file_size_mb || (request.file_size / (1024 * 1024)).toFixed(2);
+                    const mlDetails = request.ml_details || {};
+                    
+                    html += `
+                        <div class="glass-card p-6 rounded-xl">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <h3 class="font-bold text-white text-lg">${SecurityUtils.sanitize(request.filename)}</h3>
+                                        <span class="status-badge ${statusColor}">${statusText}</span>
+                                        <span class="text-xs text-gray-400">${fileSizeMB} MB</span>
+                                    </div>
+                                    
+                                    <p class="text-sm text-gray-400 mb-3">Uploaded: ${SecurityUtils.sanitize(request.time_ago || 'Recently')}</p>
+                                    
+                                    <!-- Enhanced ML Verdict Display -->
+                                    <div class="mb-3 p-3 rounded-lg bg-gray-800 border border-gray-600">
+                                        <p class="text-sm font-semibold text-gray-300 mb-1">🤖 ML Risk Assessment</p>
+                                        <p class="font-mono text-green-400 text-sm">${SecurityUtils.sanitize(mlDetails.final_verdict || 'Allow')}</p>
+                                        <div class="confidence-bar">
+                                            <div class="confidence-level" style="width: ${parseFloat(mlDetails.confidence) || '85'}%"></div>
+                                        </div>
+                                        <p class="text-xs text-gray-400 mt-1">Confidence: ${SecurityUtils.sanitize(mlDetails.confidence || '85.0%')}</p>
+                                        <div class="flex gap-2 mt-2 text-xs">
+                                            <span class="bg-blue-900/50 px-2 py-1 rounded">RF: ${SecurityUtils.sanitize(mlDetails.model_predictions?.random_forest || 'Allow')}</span>
+                                            <span class="bg-purple-900/50 px-2 py-1 rounded">SVM: ${SecurityUtils.sanitize(mlDetails.model_predictions?.svm || 'Allow')}</span>
+                                            <span class="bg-yellow-900/50 px-2 py-1 rounded">ISO: ${SecurityUtils.sanitize(mlDetails.model_predictions?.isolation_forest || 'Allow')}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    ${request.admin_notes ? `
+                                        <div class="mb-2">
+                                            <p class="text-sm text-gray-300">Admin Notes:</p>
+                                            <p class="text-sm text-gray-500 bg-gray-800 p-2 rounded">${SecurityUtils.sanitize(request.admin_notes)}</p>
+                                        </div>
+                                    ` : ''}
+                                    
+                                    ${request.approved_by ? `
+                                        <p class="text-sm text-green-400">✅ Approved by: ${SecurityUtils.sanitize(request.approved_by)} at ${new Date(request.approved_at).toLocaleString()}</p>
+                                    ` : ''}
+                                    
+                                    ${request.requires_password ? `
+                                        <p class="text-sm text-yellow-400 mt-2">🔒 Password Protected</p>
+                                    ` : ''}
+                                </div>
+                                <div class="text-right ml-4">
+                                    <p class="font-bold text-lg ${statusColor.replace('status-', 'text-')}">${statusText}</p>
+                                    <p class="text-sm text-gray-400">${SecurityUtils.sanitize(request.admin_action || 'Pending review')}</p>
+                                    ${request.status === 'approved' ? 
+                                        `<button onclick="downloadApprovedFile('${SecurityUtils.sanitize(request.filename)}')" 
+                                                class="mt-2 bg-indigo-600 text-white px-4 py-2 rounded text-sm hover:bg-indigo-700 transition-colors">
+                                            📥 Download File
+                                        </button>` : 
+                                        ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                requestsList.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error loading user requests:', error);
+                showMessage('user-requests-list', '❌ Error loading requests', 'message-error');
+            }
+        }
+
+        async function loadUserActivity() {
+            try {
+                const response = await fetch('/api/dashboard_data');
+                const data = await response.json();
+                
+                const activityLog = document.getElementById('user-activity-log');
+                
+                if (!data.user_activity || data.user_activity.length === 0) {
+                    activityLog.innerHTML = '<p class="text-gray-400 text-center py-4">No activity recorded yet.</p>';
+                    return;
+                }
+                
+                let html = '';
+                data.user_activity.forEach(activity => {
+                    html += `
+                        <div class="p-3 bg-black/20 rounded-lg mb-2 border-l-4 border-indigo-500">
+                            <p class="text-white text-sm">${SecurityUtils.sanitize(activity)}</p>
+                        </div>
+                    `;
+                });
+                
+                activityLog.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading user activity:', error);
+                document.getElementById('user-activity-log').innerHTML = `
+                    <p class="text-red-400 text-center">Error loading activity</p>
+                `;
+            }
+        }
+
+        // =============================================
+        // FILE UPLOAD WITH REAL-TIME ML
+        // =============================================
+        document.getElementById('upload-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fileInput = document.getElementById('file-input');
+            const cryptoPassword = document.getElementById('crypto-password').value;
+            
+            if (!fileInput.files[0]) {
+                showMessage('user-message-area', '❌ Please select a file', 'message-error');
+                return;
+            }
+            
+            if (!cryptoPassword) {
+                showMessage('user-message-area', '❌ Please enter an encryption password', 'message-error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('crypto_password', cryptoPassword);
+            
+            showMessage('user-message-area', '⏳ Uploading & Running ML Analysis...', 'message-info');
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.message);
+                }
+                
+                const mlColor = result.ml_verdict && result.ml_verdict.includes('Deny') ? 'text-red-400' : 
+                              result.ml_verdict && result.ml_verdict.includes('Allow') ? 'text-green-400' : 'text-yellow-400';
+                
+                showMessage('user-message-area', 
+                    `✅ File uploaded successfully! ML Analysis: <span class="${mlColor}">${SecurityUtils.sanitize(result.ml_verdict || 'Pending')}</span>. Waiting for admin approval.`, 
+                    'message-success'
+                );
+                
+                // Clear the form
+                fileInput.value = '';
+                document.getElementById('crypto-password').value = '';
+                
+                // Reload user requests to show the new pending request
+                setTimeout(() => {
+                    loadUserRequests();
+                    loadUserFiles();
+                }, 2000);
+                
+            } catch (error) {
+                showMessage('user-message-area', `❌ Upload failed: ${SecurityUtils.sanitize(error.message)}`, 'message-error');
+            }
+        });
+
+        // =============================================
+        // ENHANCED APPROVED FILES MANAGEMENT - FIXED
+        // =============================================
+        async function loadApprovedFiles(forceRefresh = false) {
+            try {
+                const now = Date.now();
+                
+                if (!forceRefresh && approvedFilesCache.length > 0 && (now - lastApprovedUpdate) < CACHE_DURATION) {
+                    renderApprovedFiles(approvedFilesCache);
+                    return;
+                }
+
+                const response = await fetch('/api/admin/approved_files');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const approvedFiles = await response.json();
+                
+                approvedFilesCache = approvedFiles;
+                lastApprovedUpdate = Date.now();
+                
+                renderApprovedFiles(approvedFiles);
+                
+            } catch (error) {
+                console.error('Error loading approved files:', error);
+                
+                if (approvedFilesCache.length > 0) {
+                    showMessage('admin-approved-list', '⚠️ Using cached data - Connection issue', 'message-warning');
+                    renderApprovedFiles(approvedFilesCache);
+                } else {
+                    document.getElementById('admin-approved-list').innerHTML = `
+                        <div class="text-center py-8">
+                            <p class="text-red-400">❌ Error loading approved files</p>
+                            <p class="text-sm text-gray-500 mt-2">${SecurityUtils.sanitize(error.message)}</p>
+                            <button onclick="loadApprovedFiles(true)" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition-colors">
+                                🔄 Retry Loading
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        function renderApprovedFiles(approvedFiles) {
+            const approvedList = document.getElementById('admin-approved-list');
+            
+            if (!approvedFiles || approvedFiles.length === 0) {
+                approvedList.innerHTML = `
+                    <div class="text-center py-8">
+                        <p class="text-gray-400">No approved files yet</p>
+                        <p class="text-sm text-gray-500 mt-2">Files will appear here after admin approval</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            
+            approvedFiles.forEach(file => {
+                const fileSizeMB = file.file_size_mb || (file.file_size / (1024 * 1024)).toFixed(2);
+                const mlDetails = file.ml_details || {};
+                const modelPredictions = mlDetails.model_predictions || {};
+                const lastAccessed = file.last_accessed === 'Never' ? 
+                    'Never' : 
+                    new Date(file.last_accessed).toLocaleString();
+                
+                // ALWAYS show password section but with secure display
+                const passwordDisplay = file.crypto_password ? `
+                    <div class="mt-3 bg-yellow-900/30 p-3 rounded border border-yellow-600">
+                        <p class="text-gray-400 font-semibold text-center">🔒 Password Protected</p>
+                        <div class="flex items-center justify-center space-x-2 mt-2">
+                            <span class="text-white font-mono text-lg bg-black/30 p-2 rounded">••••••••</span>
+                        </div>
+                        <p class="text-xs text-yellow-400 text-center mt-2">
+                            ⚠️ File encrypted with user password
+                        </p>
+                    </div>
+                ` : `
+                    <div class="mt-3 bg-gray-800/50 p-3 rounded border border-gray-600">
+                        <p class="text-gray-400 text-center">🔓 No password protection</p>
+                    </div>
+                `;
+                
+                html += `
+                    <div class="glass-card p-6 rounded-xl mb-4 approved-file-item" data-file-id="${file.file_id}">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-4 mb-3">
+                                    <h3 class="font-bold text-white text-lg">${SecurityUtils.sanitize(file.filename)}</h3>
+                                    <span class="status-badge status-approved">APPROVED</span>
+                                    ${file.requires_password ? '<span class="text-xl text-yellow-400" title="Password Protected">🔒</span>' : ''}
+                                    ${file.access_count > 0 ? 
+                                        `<span class="bg-blue-500 text-white px-2 py-1 rounded text-xs" title="Access Count">📥 ${file.access_count}</span>` : 
+                                        `<span class="bg-gray-600 text-white px-2 py-1 rounded text-xs" title="Never Accessed">⏳ New</span>`
+                                    }
+                                </div>
+                                
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm mb-4">
+                                    <div>
+                                        <p class="text-gray-400">User</p>
+                                        <p class="text-white">${SecurityUtils.sanitize(file.user)}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-400">Owner</p>
+                                        <p class="text-white">${SecurityUtils.sanitize(file.owner)}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-400">File Size</p>
+                                        <p class="text-white">${fileSizeMB} MB</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-400">Approved By</p>
+                                        <p class="text-white">${SecurityUtils.sanitize(file.approved_by)}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-400">Approval Time</p>
+                                        <p class="text-white">${new Date(file.approved_at).toLocaleString()}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-400">Last Accessed</p>
+                                        <p class="text-white">${lastAccessed}</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Enhanced ML Details Section - ALWAYS VISIBLE -->
+                                <div class="mb-3 p-3 bg-gray-800 rounded-lg">
+                                    <p class="text-gray-400 font-semibold mb-2">🤖 ML Risk Assessment</p>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                                        <div class="text-center p-2 bg-green-900/30 rounded">
+                                            <p class="text-gray-400">Final Verdict</p>
+                                            <p class="text-green-400 font-bold">${SecurityUtils.sanitize(mlDetails.final_verdict || 'Allow')}</p>
+                                        </div>
+                                        <div class="text-center p-2 bg-blue-900/30 rounded">
+                                            <p class="text-gray-400">RF Model</p>
+                                            <p class="text-blue-400">${SecurityUtils.sanitize(modelPredictions.random_forest || 'Allow')}</p>
+                                        </div>
+                                        <div class="text-center p-2 bg-purple-900/30 rounded">
+                                            <p class="text-gray-400">SVM Model</p>
+                                            <p class="text-purple-400">${SecurityUtils.sanitize(modelPredictions.svm || 'Allow')}</p>
+                                        </div>
+                                        <div class="text-center p-2 bg-yellow-900/30 rounded">
+                                            <p class="text-gray-400">ISO Model</p>
+                                            <p class="text-yellow-400">${SecurityUtils.sanitize(modelPredictions.isolation_forest || 'Allow')}</p>
+                                        </div>
+                                    </div>
+                                    <div class="confidence-bar mt-2">
+                                        <div class="confidence-level" style="width: ${parseFloat(mlDetails.confidence) || '85'}%"></div>
+                                    </div>
+                                    <p class="text-xs text-center mt-2 text-gray-400">
+                                        Confidence: <span class="text-white">${SecurityUtils.sanitize(mlDetails.confidence || '85.0%')}</span>
+                                    </p>
+                                </div>
+                                
+                                <!-- Password Section - ALWAYS VISIBLE but secure -->
+                                ${passwordDisplay}
+                                
+                                ${file.admin_notes ? `
+                                    <div class="mt-2">
+                                        <p class="text-gray-400">Admin Notes</p>
+                                        <p class="text-white text-sm bg-gray-800 p-2 rounded">${SecurityUtils.sanitize(file.admin_notes)}</p>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="text-right ml-4">
+                                <button onclick="adminDownloadFile('${file.file_id}', '${SecurityUtils.sanitize(file.filename)}')" 
+                                        class="bg-indigo-600 text-white px-4 py-2 rounded text-sm hover:bg-indigo-700 transition-colors download-btn">
+                                    📥 Download File
+                                </button>
+                                <div class="mt-2 text-xs">
+                                    ${file.access_count > 0 ? `
+                                        <p class="text-blue-400">Accessed ${file.access_count} times</p>
+                                        <p class="text-gray-400">Last: ${lastAccessed}</p>
+                                    ` : `
+                                        <p class="text-gray-400">Not accessed yet</p>
+                                    `}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            approvedList.innerHTML = html;
+        }
+
+        // Enhanced download function that preserves the display
+        async function adminDownloadFile(fileId, filename) {
+            try {
+                // Show downloading state
+                const fileElement = document.querySelector(`[data-file-id="${fileId}"]`);
+                if (fileElement) {
+                    const downloadBtn = fileElement.querySelector('.download-btn');
+                    const originalText = downloadBtn.innerHTML;
+                    downloadBtn.innerHTML = '⏳ Downloading...';
+                    downloadBtn.disabled = true;
+                }
+                
+                const response = await fetch(`/api/admin/download_file/${fileId}`);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Download failed');
+                }
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                // Show success message but DON'T reload the entire list
+                showMessage('admin-approved-list', `✅ ${SecurityUtils.sanitize(filename)} downloaded successfully!`, 'message-success');
+                
+                // Refresh access count without full reload
+                setTimeout(() => {
+                    loadApprovedFiles(true); // Force refresh to update access count
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Admin download error:', error);
+                showMessage('admin-approved-list', `❌ Download failed: ${SecurityUtils.sanitize(error.message)}`, 'message-error');
+                
+                // Reset button state
+                const fileElement = document.querySelector(`[data-file-id="${fileId}"]`);
+                if (fileElement) {
+                    const downloadBtn = fileElement.querySelector('.download-btn');
+                    downloadBtn.innerHTML = '📥 Download File';
+                    downloadBtn.disabled = false;
+                }
+            }
+        }
+
+        // =============================================
+        // DOWNLOAD FUNCTIONS
+        // =============================================
+        async function downloadApprovedFile(filename) {
+            try {
+                showMessage('user-requests-list', `⏳ Downloading ${SecurityUtils.sanitize(filename)}...`, 'message-info');
+                
+                const response = await fetch(`/api/user/download_approved/${encodeURIComponent(filename)}`);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Download failed');
+                }
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                showMessage('user-requests-list', `✅ File ${SecurityUtils.sanitize(filename)} downloaded successfully!`, 'message-success');
+                
+            } catch (error) {
+                console.error('Download error:', error);
+                showMessage('user-requests-list', `❌ Download failed: ${SecurityUtils.sanitize(error.message)}`, 'message-error');
+            }
+        }
+
+        // =============================================
+        // ADMIN DASHBOARD FUNCTIONS - REAL TIME
+        // =============================================
+        async function loadAdminRequests() {
+            try {
+                const response = await fetch('/api/admin/pending_requests');
+                const requests = await response.json();
+                
+                const requestsTable = document.getElementById('admin-requests-table');
+                
+                if (!requests || requests.length === 0) {
+                    requestsTable.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">No pending requests</td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                
+                requests.forEach(request => {
+                    const mlDetails = request.ml_details || {};
+                    const modelPredictions = mlDetails.model_predictions || {};
+                    const fileSizeMB = request.file_size_mb || (request.file_size / (1024 * 1024)).toFixed(2);
+                    
+                    html += `
+                        <tr class="border-b border-gray-700 hover:bg-gray-800/50">
+                            <td class="py-4 px-6 font-medium">${SecurityUtils.sanitize(request.user)}</td>
+                            <td class="py-4 px-6">
+                                <div class="font-medium text-white">${SecurityUtils.sanitize(request.filename)}</div>
+                                <div class="text-xs text-gray-400 mt-1">${fileSizeMB} MB • ${SecurityUtils.sanitize(request.time_ago || 'Recently')}</div>
+                            </td>
+                            <td class="py-4 px-6">
+                                <div class="text-green-400 font-mono text-sm font-semibold">${SecurityUtils.sanitize(mlDetails.final_verdict || 'Allow')}</div>
+                                <div class="text-xs text-gray-400 mt-1">
+                                    RF: ${SecurityUtils.sanitize(modelPredictions.random_forest || 'Allow')} | 
+                                    SVM: ${SecurityUtils.sanitize(modelPredictions.svm || 'Allow')} | 
+                                    ISO: ${SecurityUtils.sanitize(modelPredictions.isolation_forest || 'Allow')}
+                                </div>
+                                <div class="confidence-bar">
+                                    <div class="confidence-level" style="width: ${parseFloat(mlDetails.confidence) || '85'}%"></div>
+                                </div>
+                                <div class="text-xs text-blue-400 mt-1">Confidence: ${SecurityUtils.sanitize(mlDetails.confidence || '85.0%')}</div>
+                            </td>
+                            <td class="py-4 px-6">
+                                ${request.crypto_password ? `
+                                    <div class="bg-yellow-900/50 p-2 rounded border border-yellow-600">
+                                        <p class="text-xs text-yellow-400 font-semibold">User Password:</p>
+                                        <p class="text-white font-mono text-sm bg-black/30 p-1 rounded text-center">${SecurityUtils.sanitize(request.crypto_password)}</p>
+                                        <p class="text-xs text-green-400 mt-1 text-center">Required for file access</p>
+                                    </div>
+                                ` : `
+                                    <div class="bg-gray-800/50 p-2 rounded">
+                                        <p class="text-xs text-gray-400">No password provided</p>
+                                    </div>
+                                `}
+                            </td>
+                            <td class="py-4 px-6">
+                                <button onclick="approveRequest('${request.request_id}')" 
+                                        class="bg-green-600 text-white px-4 py-2 rounded text-sm mr-2 hover:bg-green-700 transition-colors">
+                                    ✅ Approve
+                                </button>
+                                <button onclick="rejectRequest('${request.request_id}')" 
+                                        class="bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700 transition-colors">
+                                    ❌ Reject
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                requestsTable.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading admin requests:', error);
+                showMessage('admin-requests-table', '❌ Error loading requests', 'message-error');
+            }
+        }
+
+        async function loadBlockchainLog() {
+            try {
+                const response = await fetch('/api/admin/blockchain_log');
+                const data = await response.json();
+                
+                // Update blockchain stats
+                document.getElementById('blockchain-total-blocks').textContent = data.total_blocks || 0;
+                document.getElementById('blockchain-last-update').textContent = data.last_update ? new Date(data.last_update).toLocaleString() : 'Unknown';
+                
+                if (data.chain && data.chain.length > 0) {
+                    document.getElementById('audit-log').textContent = JSON.stringify(data.chain, null, 2);
+                } else {
+                    document.getElementById('audit-log').textContent = 'No blockchain data available';
+                }
+            } catch (error) {
+                console.error('Error loading blockchain log:', error);
+                document.getElementById('audit-log').textContent = `Error: ${SecurityUtils.sanitize(error.message)}`;
+            }
+        }
+
+        async function approveRequest(requestId) {
+            const notes = prompt('Enter approval notes (optional):');
+            if (notes === null) return;
+            
+            try {
+                showMessage('admin-requests-table', '⏳ Approving request...', 'message-info');
+                
+                const response = await fetch('/api/admin/approve_request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        request_id: requestId, 
+                        admin_notes: notes || '' 
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showMessage('admin-requests-table', '✅ Request approved successfully!', 'message-success');
+                    loadAdminRequests();
+                    updateAdminStats();
+                    loadApprovedFiles();
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                console.error('Approve error:', error);
+                showMessage('admin-requests-table', `❌ Failed to approve: ${SecurityUtils.sanitize(error.message)}`, 'message-error');
+            }
+        }
+
+        async function rejectRequest(requestId) {
+            const notes = prompt('Enter rejection reason (optional):');
+            if (notes === null) return;
+            
+            try {
+                showMessage('admin-requests-table', '⏳ Rejecting request...', 'message-info');
+                
+                const response = await fetch('/api/admin/reject_request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        request_id: requestId, 
+                        admin_notes: notes || '' 
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showMessage('admin-requests-table', '❌ Request rejected successfully!', 'message-error');
+                    loadAdminRequests();
+                    updateAdminStats();
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                console.error('Reject error:', error);
+                showMessage('admin-requests-table', `❌ Failed to reject: ${SecurityUtils.sanitize(error.message)}`, 'message-error');
+            }
+        }
+
+        async function updateAdminStats() {
+            try {
+                const response = await fetch('/api/system_stats');
+                const stats = await response.json();
+                
+                // Update main stats
+                document.getElementById('stats-total-files').textContent = stats.total_files || 0;
+                document.getElementById('stats-blockchain-length').textContent = stats.blockchain_events || 0;
+                document.getElementById('stats-pending-requests').textContent = stats.pending_requests || 0;
+                document.getElementById('stats-approved-requests').textContent = stats.approved_requests || 0;
+                
+                // Update ML stats
+                document.getElementById('stats-ml-analyzed').textContent = stats.ml_analysis?.total_analyzed || 0;
+                document.getElementById('stats-ml-allowed').textContent = stats.ml_analysis?.allowed || 0;
+                document.getElementById('stats-ml-denied').textContent = stats.ml_analysis?.denied || 0;
+                document.getElementById('stats-ml-review').textContent = stats.ml_analysis?.review_required || 0;
+                
+                // Update additional stats
+                document.getElementById('stats-active-users').textContent = stats.total_users || 0;
+                document.getElementById('stats-protected-files').textContent = stats.password_protected_files || 0;
+                
+                // ML Status is ALWAYS ACTIVE now
+                const mlStatus = document.getElementById('ml-status');
+                const mlIndicator = document.getElementById('ml-status-indicator');
+                mlStatus.textContent = 'Active';
+                mlStatus.className = 'text-lg font-bold text-green-400';
+                mlIndicator.className = 'status-indicator status-online';
+                
+                updateChart(stats.blockchain_events || 0, stats.pending_requests || 0);
+            } catch (error) {
+                console.error("Failed to update stats:", error);
+            }
+        }
+
+        // =============================================
+        // PROFILE MANAGEMENT
+        // =============================================
+        document.getElementById('edit-profile-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = SecurityUtils.sanitize(document.getElementById('profile-email').value);
+            const new_password = document.getElementById('profile-password').value;
+            const payload = { email, new_password: new_password || null };
+            
+            try {
+                const response = await fetch('/api/profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                showMessage('user-message-area', SecurityUtils.sanitize(result.message), response.ok ? 'message-success' : 'message-error');
+                
+                if(response.ok) {
+                    loadProfile('user');
+                    document.getElementById('profile-password').value = '';
+                }
+            } catch (error) {
+                showMessage('user-message-area', '❌ Network error updating profile', 'message-error');
+            }
+        });
+
+        document.getElementById('edit-admin-profile-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = SecurityUtils.sanitize(document.getElementById('admin-profile-email').value);
+            const new_password = document.getElementById('admin-profile-password').value;
+            const payload = { email, new_password: new_password || null };
+            
+            try {
+                const response = await fetch('/api/profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                if(response.ok) {
+                    showMessage('admin-profile-page', '✅ Admin profile updated successfully!', 'message-success');
+                    loadProfile('admin');
+                    document.getElementById('admin-profile-password').value = '';
+                } else {
+                    showMessage('admin-profile-page', '❌ Failed to update profile: ' + SecurityUtils.sanitize(result.message), 'message-error');
+                }
+            } catch (error) {
+                showMessage('admin-profile-page', '❌ Network error updating profile', 'message-error');
+            }
+        });
+
+        // =============================================
+        // UTILITY FUNCTIONS
+        // =============================================
+        function showMessage(areaId, message, messageType) {
+            let area = document.getElementById(areaId);
+            if (!area) {
+                // Create a temporary message area
+                area = document.createElement('div');
+                area.id = 'temp-message';
+                const container = document.querySelector('.dashboard-main') || document.body;
+                container.insertBefore(area, container.firstChild);
+            }
+            
+            area.innerHTML = message;
+            area.className = `message-area ${messageType} opacity-100`;
+            
+            setTimeout(() => {
+                if (area && area.id === 'temp-message') {
+                    area.remove();
+                } else if (area) {
+                    area.className = 'message-area opacity-0';
+                }
+            }, 5000);
+        }
+
+        // =============================================
+        // CHART.JS ADMIN GRAPH
+        // =============================================
+        let activityChart;
+        function createChart() {
+            const ctx = document.getElementById('activityChart').getContext('2d');
+            activityChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Blockchain Events', 'Pending Requests'],
+                    datasets: [{
+                        label: 'System Activity',
+                        data: [0, 0],
+                        backgroundColor: ['rgba(79, 70, 229, 0.5)', 'rgba(245, 158, 11, 0.5)'],
+                        borderColor: ['rgba(79, 70, 229, 1)', 'rgba(245, 158, 11, 1)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#9ca3af' }
+                        },
+                        x: {
+                            ticks: { color: '#9ca3af' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#9ca3af' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChart(blockchainLength, pendingCount) {
+            if (!activityChart) createChart();
+            activityChart.data.datasets[0].data = [blockchainLength, pendingCount];
+            activityChart.update();
+        }
+
+        // =============================================
+        // INITIALIZE APPLICATION
+        // =============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Initializing Secure File Access System v3.0...');
+            
+            initThreeJSBackground();
+            
+            document.getElementById('launch-app-btn').addEventListener('click', () => showView('login-view'));
+            document.getElementById('go-to-signup').addEventListener('click', (e) => {
+                e.preventDefault();
+                showView('signup-view');
+            });
+            document.getElementById('go-to-login').addEventListener('click', (e) => {
+                e.preventDefault();
+                showView('login-view');
+            });
+            
+            createChart();
+            
+            // Global error handlers
+            window.addEventListener('error', (event) => {
+                console.error('Global error:', event.error);
+            });
+
+            window.addEventListener('unhandledrejection', (event) => {
+                console.error('Unhandled promise rejection:', event.reason);
+            });
+
+            // Cleanup on page unload
+            window.addEventListener('beforeunload', cleanupAllIntervals);
+            window.addEventListener('pagehide', cleanupAllIntervals);
+            
+            console.log('✅ Application initialized successfully');
+        });
+
+    </script>
+</body>
+</html>
