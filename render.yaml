@@ -3,5 +3,6 @@ services:
     name: crypto-backed-file-access-control
     env: python
     plan: free
+    runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
