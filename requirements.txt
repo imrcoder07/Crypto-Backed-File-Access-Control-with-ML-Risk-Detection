@@ -1,9 +1,15 @@
 Flask==3.1.2
 gunicorn==21.2.0
 
+# Machine Learning stack
 numpy==1.26.4
 pandas==2.3.2
 scikit-learn==1.3.2
 joblib==1.4.2
 
-Pillow==10.1.0
+# Security / crypto
+cryptography==42.0.5
+bcrypt==4.1.2
+
+# Flask internal dependency
+Werkzeug==3.1.5
