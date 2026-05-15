@@ -1,0 +1,172 @@
+import os
+import uuid
+from flask import Blueprint, request, jsonify, session, send_file
+from werkzeug.utils import secure_filename
+from modules.extensions import audit_ledger, ml_analyzer
+from modules.encryption_utils import encryption_service
+from modules.utils import validate_filename, get_time_ago
+from modules import db
+
+user_bp = Blueprint('user', __name__)
+
+_BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+UPLOAD_FOLDER = os.path.join(_BASE_DIR, 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+@user_bp.route('/api/profile', methods=['GET', 'POST'])
+def user_profile():
+    if 'username' not in session:
+        return jsonify({'message': 'Unauthorized'}), 401
+    
+    username = session['username']
+    
+    if request.method == 'GET':
+        user_data = db.get_user(username) or {}
+        # Remove password hash before sending to client
+        safe_data = {k: v for k, v in user_data.items() if k != 'password'}
+        return jsonify(safe_data)
+
+@user_bp.route('/api/user/my_files', methods=['GET'])
+def get_user_files():
+    if 'username' not in session:
+        return jsonify({'message': 'Unauthorized'}), 401
+    
+    username = session['username']
+    files = db.get_user_files(username)
+    
+    result = []
+    for f in files:
+        file_id = f['file_id']
+        result.append({
+            'file_id': file_id,
+            'filename': f['filename'],
+            'upload_time': get_time_ago(f['upload_time']),
+            'size': f"{f['file_size'] / 1024:.1f} KB" if f['file_size'] else "Unknown",
+            'access_count': db.get_file_access_count(file_id),
+            'last_accessed': get_time_ago(db.get_last_file_access_time(file_id))
+        })
+    return jsonify(result)
+
+@user_bp.route('/upload', methods=['POST'])
+def upload_file():
+    if 'username' not in session:
+        return jsonify({'message': 'Unauthorized'}), 401
+
+    if 'file' not in request.files:
+        return jsonify({'message': 'No file part'}), 400
+        
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'message': 'No selected file'}), 400
+        
+    if not validate_filename(file.filename):
+        return jsonify({'message': 'Invalid or dangerous filename.'}), 400
+
+    username = session['username']
+    password = request.form.get('password')
+    
+    if not password:
+        return jsonify({'message': 'Encryption password is required'}), 400
+
+    filename = secure_filename(file.filename)
+    file_id = str(uuid.uuid4())
+    save_path = os.path.join(UPLOAD_FOLDER, f"{file_id}.enc")
+
+    # Read and Encrypt
+    try:
+        file_data = file.read()
+        file_size = len(file_data)
+        encrypted_data, salt = encryption_service.encrypt(file_data, password)
+        
+        # Save to S3/MinIO
+        from modules.storage_utils import storage_service
+        save_path = storage_service.upload_file(file_id, salt + encrypted_data)
+        
+    except Exception as e:
+        return jsonify({'message': f'Encryption/Upload failed: {str(e)}'}), 500
+
+    # Persist to DB
+    db.create_file_record(file_id, username, filename, save_path, file_size)
+
+    # ML Analysis
+    features = {
+        'file_size': file_size,
+        'name_length': len(filename),
+        'is_executable': 1 if filename.lower().endswith(('.exe', '.dll', '.bat', '.sh', '.bin')) else 0,
+        'has_special_chars': 1 if not filename.replace('.', '').replace('-', '').replace('_', '').isalnum() else 0,
+        'upload_hour': 12, 
+        'user_trust_score': 0.85
+    }
+    ml_results = ml_analyzer.analyze_risk(features)
+
+    # Create Request
+    req_id = str(uuid.uuid4())
+    db.create_request(req_id, username, file_id, filename, "Upload Request", ml_results)
+
+    audit_ledger.add_event(f"User '{username}' uploaded file: {filename} (ID: {file_id})")
+    db.log_activity(username, "file_upload", f"File: {filename}")
+    
+    return jsonify({
+        'message': 'File securely encrypted and uploaded. Pending admin approval.',
+        'file_id': file_id,
+        'request_id': req_id,
+        'ml_analysis': ml_results
+    })
+
+@user_bp.route('/api/user/my_requests')
+def get_user_requests():
+    if 'username' not in session:
+        return jsonify({'message': 'Unauthorized'}), 401
+    
+    username = session['username']
+    requests = db.get_requests_by_user(username)
+    for r in requests:
+        r['upload_time'] = get_time_ago(r.get('upload_time'))
+    return jsonify(requests)
+
+@user_bp.route('/api/user/download/<file_id>', methods=['POST'])
+def download_approved_file(file_id):
+    if 'username' not in session:
+        return jsonify({'message': 'Unauthorized'}), 401
+        
+    username = session['username']
+    password = request.json.get('password')
+    
+    if not password:
+        return jsonify({'message': 'Decryption password is required'}), 400
+
+    req = db.get_approved_request_for_user(file_id, username)
+    if not req:
+        return jsonify({'message': 'File not found or not approved for download.'}), 404
+        
+    file_info = db.get_file(file_id)
+    if not file_info:
+        return jsonify({'message': 'File record not found.'}), 404
+
+    try:
+        from modules.storage_utils import storage_service
+        file_content = storage_service.get_file(file_info['path'])
+            
+        salt = file_content[:16]
+        encrypted_data = file_content[16:]
+        
+        decrypted_data = encryption_service.decrypt(encrypted_data, password, salt)
+        
+        audit_ledger.add_event(f"User '{username}' securely downloaded file: {file_info['filename']}")
+        db.log_activity(username, "file_download", f"File: {file_info['filename']}")
+        db.log_file_access(file_id, username, "download", success=True)
+        
+        # We save it to a temporary file path so send_file can use it.
+        # But wait, send_file can take an io.BytesIO stream!
+        import io
+        return send_file(
+            io.BytesIO(decrypted_data),
+            as_attachment=True,
+            download_name=file_info['filename']
+        )
+        
+    except Exception as e:
+        db.log_file_access(file_id, username, "download", success=False)
+        db.log_activity(username, "download_failed", f"File: {file_info['filename']}")
+        # UX-5: Hide stack traces and sensitive errors, return generic message.
+        return jsonify({'message': 'Decryption failed. Please verify your password.'}), 401
