@@ -1,0 +1,5 @@
+{
+  "random_forest_pipeline.pkl": "0706fb48b9f42452baa521d3bac2c6a14fbd4dc075e683839aacb420eea22a7a",
+  "svm_pipeline.pkl": "0a6284a19b48ec2ccb6cb87baeaa4fae33848e09da9733accb61c316c25522e1",
+  "isolation_forest_pipeline.pkl": "d689fefc35a981363c4ff813514658b762b9fce5dc06313054adcd920050fe24"
+}

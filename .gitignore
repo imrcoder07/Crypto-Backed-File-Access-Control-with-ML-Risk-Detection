@@ -1,2 +1,11 @@
 __pycache__/
 *.zip
+
+# Runtime secrets — never commit these
+data/secret_key.bin
+data/users.json
+data/users_backup.json
+
+# Python virtual environment
+venv/
+.env
