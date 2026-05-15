@@ -18,13 +18,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 6. Copy the rest of the app
 COPY . .
 
-# 7. Create non-root user and set permissions
-RUN useradd -m appuser && \
+# 7. Make entrypoint executable and create non-root user
+RUN chmod +x entrypoint.sh && \
+    useradd -m appuser && \
     chown -R appuser:appuser /app
 USER appuser
 
 # 8. Expose port
 EXPOSE 8000
 
-# 9. Start the app
-CMD ["sh", "-c", "gunicorn app:app --bind 0.0.0.0:${PORT:-8000}"]
+# 9. Run migrations then start Gunicorn
+CMD ["sh", "entrypoint.sh"]
