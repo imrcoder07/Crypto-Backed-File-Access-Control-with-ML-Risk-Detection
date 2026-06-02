@@ -32,46 +32,37 @@ def bootstrap_admin_from_env() -> bool:
     Designed to be called from entrypoint.sh before Gunicorn starts.
     Safe to call on every deploy — idempotent via ON CONFLICT DO UPDATE in db.
     """
-    logger.info("Admin bootstrap: Started.")
-    try:
-        username = os.environ.get("ADMIN_USERNAME", "").strip()
-        password = os.environ.get("ADMIN_PASSWORD", "").strip()
+    username = os.environ.get("ADMIN_USERNAME", "").strip()
+    password = os.environ.get("ADMIN_PASSWORD", "").strip()
 
-        if not username or not password:
-            logger.info("Admin bootstrap: Finished. Skipped because ADMIN_USERNAME or ADMIN_PASSWORD not set.")
-            return False
-
-        logger.info(f"Admin bootstrap: ADMIN_USERNAME '{username}' detected.")
-
-        if len(password) < 12:
-            logger.error(
-                "Admin bootstrap: Aborted. ADMIN_PASSWORD must be at least 12 characters. "
-                "Set a stronger password in your Render environment variables."
-            )
-            return False
-
-        logger.info(f"Admin bootstrap: Checking if admin user '{username}' exists in database...")
-        existing = get_user(username)
-        if existing:
-            if existing.get('role') == 'Admin':
-                logger.info(f"Admin bootstrap: Finished. Account '{username}' already exists as Admin. Skipping.")
-            else:
-                logger.warning(
-                    f"Admin bootstrap: Finished. Account '{username}' exists with role '{existing['role']}'. "
-                    "Not overwriting role. Use 'python manage_admin.py promote-user' to promote."
-                )
-            return False
-
-        logger.info(f"Admin bootstrap: Creating admin user '{username}'...")
-        create_user(
-            username=username,
-            password_hash=hash_password(password),
-            role="Admin",
-            email=f"{username}@admin.internal",
-            department="Security",
-        )
-        logger.info(f"Admin bootstrap: Finished. Account '{username}' created with role=Admin successfully.")
-        return True
-    except Exception as e:
-        logger.exception("Admin bootstrap: Failed with an unexpected exception.")
+    if not username or not password:
+        logger.info("Admin bootstrap skipped: ADMIN_USERNAME or ADMIN_PASSWORD not set.")
         return False
+
+    if len(password) < 12:
+        logger.error(
+            "Admin bootstrap aborted: ADMIN_PASSWORD must be at least 12 characters. "
+            "Set a stronger password in your Render environment variables."
+        )
+        return False
+
+    existing = get_user(username)
+    if existing:
+        if existing.get('role') == 'Admin':
+            logger.info(f"Admin bootstrap: account '{username}' already exists as Admin. Skipping.")
+        else:
+            logger.warning(
+                f"Admin bootstrap: account '{username}' exists with role '{existing['role']}'. "
+                "Not overwriting role. Use 'python manage_admin.py promote-user' to promote."
+            )
+        return False
+
+    create_user(
+        username=username,
+        password_hash=hash_password(password),
+        role="Admin",
+        email=f"{username}@admin.internal",
+        department="Security",
+    )
+    logger.info(f"Admin bootstrap: account '{username}' created with role=Admin.")
+    return True

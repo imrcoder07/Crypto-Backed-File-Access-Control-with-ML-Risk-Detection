@@ -30,7 +30,7 @@ def _get_pool() -> ThreadedConnectionPool:
             raise RuntimeError(
                 "DATABASE_URL is not set. Add it to your .env file."
             )
-        _pool = ThreadedConnectionPool(minconn=1, maxconn=10, dsn=DATABASE_URL, connect_timeout=10)
+        _pool = ThreadedConnectionPool(minconn=1, maxconn=10, dsn=DATABASE_URL)
     return _pool
 
 
