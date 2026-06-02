@@ -105,6 +105,28 @@ def get_all_users() -> list:
             rows = cur.fetchall()
     return [dict(r) for r in rows]
 
+
+def update_user_password(username: str, new_password_hash: str) -> bool:
+    """Update a user's password hash. Returns True if the user existed and was updated."""
+    sql = "UPDATE users SET password = %s WHERE username = %s RETURNING username;"
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (new_password_hash, username))
+            return cur.fetchone() is not None
+
+
+def promote_user_role(username: str, new_role: str = "Admin") -> bool:
+    """Change a user's role. Returns True if the user existed and was updated."""
+    allowed_roles = {"Admin", "User"}
+    if new_role not in allowed_roles:
+        raise ValueError(f"Invalid role '{new_role}'. Must be one of: {allowed_roles}")
+    sql = "UPDATE users SET role = %s WHERE username = %s RETURNING username;"
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (new_role, username))
+            return cur.fetchone() is not None
+
+
 # ── Audit Ledger helpers ────────────────────────────────────────────────────────
 
 def append_block(index: int, timestamp: str, data: str, proof: str, previous_hash: str, block_hash: str) -> None:

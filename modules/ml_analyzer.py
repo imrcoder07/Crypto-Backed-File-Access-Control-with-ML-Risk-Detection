@@ -6,6 +6,14 @@ import json
 import datetime
 import pickle
 
+try:
+    import pandas as pd
+    _PANDAS_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    _PANDAS_AVAILABLE = False
+
+logger = logging.getLogger(__name__)
+
 _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_HASHES_PATH = os.path.join(_BASE_DIR, 'Crypto-models', 'model_hashes.json')
 
@@ -115,50 +123,53 @@ class MLRiskAnalyzer:
             })
 
     def analyze_risk(self, request_features):
-        """Analyzes a request and returns a risk assessment."""
-        # Simulated feature vector logic if actual models aren't present
+        """Analyzes a request and returns a risk assessment.
+        
+        Falls back to a mock low-risk score when models are not loaded,
+        so the upload pipeline never hard-blocks on missing ML files.
+        """
         if not self.models_loaded:
-            print("⚠️ Falling back to mock ML logic (models not loaded).")
-            # In mock mode, randomly return risk scores
+            logger.warning("ML models not loaded — returning mock risk score.")
             mock_score = round(random.uniform(0.1, 0.4), 2)
-            is_risky = mock_score > 0.75
             return {
                 'risk_score': mock_score,
-                'is_risky': is_risky,
+                'is_risky': mock_score > 0.75,
                 'confidence': 0.85,
                 'factors': ['Mock ML Engine Active'],
                 'ml_status': 'MOCK MODE'
             }
 
         try:
-            import pandas as pd
+            if not _PANDAS_AVAILABLE:
+                raise ImportError("pandas is not installed")
+
             # Create a 1-row DataFrame matching training columns
             df = pd.DataFrame([request_features])
-            
-            rf_pred = self.rf_pipeline.predict_proba(df)[0][1]
+
+            rf_pred  = self.rf_pipeline.predict_proba(df)[0][1]
             svm_pred = self.svm_pipeline.predict_proba(df)[0][1]
             # IsolationForest returns 1 (inlier) or -1 (outlier)
             iso_pred = self.iso_pipeline.predict(df)[0]
-            
-            # Simple ensemble: average the probabilities
+
+            # Ensemble: average RF + SVM probabilities
             ensemble_risk = (rf_pred + svm_pred) / 2.0
-            
-            # If Isolation Forest tags it as an anomaly (-1), push risk higher
+
+            # Isolation Forest anomaly flag boosts risk
             if iso_pred == -1:
                 ensemble_risk = min(1.0, ensemble_risk + 0.3)
-                
+
             is_risky = ensemble_risk > 0.75
-            
+
             return {
                 'risk_score': round(ensemble_risk, 2),
                 'is_risky': is_risky,
-                'confidence': 0.92, # Placeholder, could calculate based on model variance
+                'confidence': 0.92,
                 'factors': ['Ensemble Prediction', 'Isolation Forest checked'],
                 'ml_status': 'Active'
             }
-            
+
         except Exception as e:
-            print(f"ML Analysis failed: {e}")
+            logger.error(f"ML Analysis failed: {e}", exc_info=True)
             return {
                 'risk_score': 0.99,
                 'is_risky': True,
