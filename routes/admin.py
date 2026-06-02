@@ -1,11 +1,15 @@
 import os
+import io
+import logging
 import datetime
 from flask import Blueprint, request, jsonify, session, send_file
-import io
 from modules.extensions import audit_ledger, ml_analyzer
 from modules.db import get_all_users
 from modules.utils import get_time_ago
 from modules import db
+from modules.storage_utils import storage_service
+
+logger = logging.getLogger(__name__)
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -88,31 +92,43 @@ def get_approved_files():
 
 @admin_bp.route('/api/admin/download_file/<file_id>', methods=['POST'])
 def admin_download_file(file_id):
+    """Download the raw encrypted blob of any file for admin audit purposes.
+    
+    Fetches the encrypted payload from S3/MinIO (not local disk) and streams
+    it back to the admin browser as a binary attachment. The admin receives
+    the encrypted ciphertext — they cannot decrypt it without the user's password.
+    This is intentional: zero-knowledge audit trail.
+    """
     if not is_admin():
         return jsonify({'message': 'Unauthorized'}), 401
-        
-    # Admin can download any approved file, but they still need the original password,
-    # OR we are just allowing them to download the *encrypted* version?
-    # For auditing, let's say they just download the raw encrypted blob.
+
     file_info = db.get_file(file_id)
     if not file_info:
         return jsonify({'message': 'File not found'}), 404
-        
+
     admin_user = session['username']
-    
+    object_path = file_info.get('path', '')
+
     try:
-        audit_ledger.add_event(f"Admin '{admin_user}' downloaded encrypted file blob: {file_info['filename']}")
+        # Fetch encrypted bytes from S3/MinIO — no local disk access
+        encrypted_bytes = storage_service.get_file(object_path)
+
+        audit_ledger.add_event(
+            f"Admin '{admin_user}' downloaded encrypted blob: {file_info['filename']} (id={file_id})"
+        )
         db.log_activity(admin_user, "admin_download", f"Encrypted blob: {file_info['filename']}")
         db.log_file_access(file_id, admin_user, "admin_audit_download", success=True)
-        
+
         return send_file(
-            file_info['path'],
+            io.BytesIO(encrypted_bytes),
             as_attachment=True,
-            download_name=f"encrypted_{file_info['filename']}"
+            download_name=f"encrypted_{file_info['filename']}",
+            mimetype='application/octet-stream'
         )
     except Exception as e:
+        logger.error(f"Admin download failed for file_id={file_id}: {e}", exc_info=True)
         db.log_file_access(file_id, admin_user, "admin_audit_download", success=False)
-        return jsonify({'message': f'Download failed: {str(e)}'}), 500
+        return jsonify({'message': 'Download failed. Could not retrieve file from storage.'}), 500
 
 @admin_bp.route('/api/admin/approve_request', methods=['POST'])
 def approve_request():
