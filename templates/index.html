@@ -2207,19 +2207,40 @@
 
         async function loadBlockchainLog() {
             try {
-                const response = await fetch('/api/admin/blockchain_log');
+                const response = await fetch('/api/admin/audit_log');
                 const data = await response.json();
                 
                 // Update blockchain stats
                 document.getElementById('blockchain-total-blocks').textContent = data.total_blocks || 0;
-                document.getElementById('blockchain-last-update').textContent = data.last_update ? new Date(data.last_update).toLocaleString() : 'Unknown';
+                
+                let lastUpdateStr = 'Unknown';
+                if (data.last_update) {
+                    let lastUpdateDate;
+                    if (!isNaN(data.last_update)) {
+                        lastUpdateDate = new Date(data.last_update * 1000);
+                    } else {
+                        lastUpdateDate = new Date(data.last_update);
+                    }
+                    lastUpdateStr = lastUpdateDate.toLocaleString();
+                }
+                document.getElementById('blockchain-last-update').textContent = lastUpdateStr;
                 
                 const logContainer = document.getElementById('audit-log');
                 if (data.chain && data.chain.length > 0) {
                     let html = '<div class="space-y-4">';
                     data.chain.reverse().forEach(block => {
-                        const date = new Date(block.timestamp * 1000).toLocaleString();
-                        const isGenesis = block.index === 0;
+                        let blockDate;
+                        if (block.timestamp) {
+                            if (!isNaN(block.timestamp)) {
+                                blockDate = new Date(block.timestamp * 1000);
+                            } else {
+                                blockDate = new Date(block.timestamp);
+                            }
+                        } else {
+                            blockDate = new Date();
+                        }
+                        const date = blockDate.toLocaleString();
+                        const isGenesis = block.index === 0 || block.index === 1;
                         const dataContent = isGenesis ? "Genesis Block" : JSON.stringify(block.data);
                         let parsedData = {};
                         try {
@@ -2245,6 +2266,8 @@
                             textClass = "text-red-400";
                         }
                         
+                        const blockHash = block.hash || block.block_hash || 'Unknown';
+                        
                         html += `
                             <div class="bg-black/30 border-l-4 ${colorClass} p-3 rounded-r-lg relative overflow-hidden group">
                                 <div class="flex justify-between items-start mb-2 relative z-10">
@@ -2258,7 +2281,7 @@
                                     <span class="font-semibold">${user}</span> ${fileId ? ` - ${fileId}` : ''}
                                 </div>
                                 <div class="text-gray-500 text-xs font-mono break-all bg-black/40 p-2 rounded relative z-10 border border-gray-800">
-                                    Hash: ${block.hash}
+                                    Hash: ${blockHash}
                                 </div>
                                 <div class="absolute inset-0 bg-gradient-to-r from-${colorClass.split('-')[1]}-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-0"></div>
                             </div>

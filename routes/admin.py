@@ -50,7 +50,17 @@ def get_audit_log():
     chain = audit_ledger.get_chain_snapshot()
     for block in chain:
         block['timestamp_formatted'] = get_time_ago(block['timestamp'])
-    return jsonify(chain)
+        
+    return jsonify({
+        'total_blocks': len(chain),
+        'last_update': chain[-1]['timestamp'] if chain else None,
+        'chain': chain
+    })
+
+@admin_bp.route('/api/admin/blockchain_log')
+def get_blockchain_log():
+    """Compatibility alias for the audit log endpoint."""
+    return get_audit_log()
 
 @admin_bp.route('/api/admin/security_alerts')
 def get_security_alerts():
