@@ -42,6 +42,9 @@ def get_user_files():
             'filename': f['filename'],
             'upload_time': get_time_ago(f['upload_time']),
             'size': f"{f['file_size'] / 1024:.1f} KB" if f['file_size'] else "Unknown",
+            'file_size': f.get('file_size'),
+            'file_size_mb': f.get('file_size_mb'),
+            'status': f.get('status', 'pending'),
             'access_count': db.get_file_access_count(file_id),
             'last_accessed': get_time_ago(db.get_last_file_access_time(file_id))
         })
