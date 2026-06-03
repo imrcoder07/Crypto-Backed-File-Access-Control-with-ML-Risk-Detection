@@ -234,7 +234,13 @@ def password_protected_count() -> int:
 
 
 def get_user_files(username: str) -> list:
-    sql = "SELECT * FROM files WHERE owner = %s ORDER BY uploaded_at DESC;"
+    sql = """
+        SELECT f.*, r.status, r.request_id 
+        FROM files f 
+        LEFT JOIN requests r ON f.file_id = r.file_id 
+        WHERE f.owner = %s 
+        ORDER BY f.uploaded_at DESC;
+    """
     with get_db() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(sql, (username,))
@@ -251,6 +257,7 @@ def get_user_files(username: str) -> list:
         )
         files.append(item)
     return files
+
 
 
 # ── Request helpers ───────────────────────────────────────────────────────────
