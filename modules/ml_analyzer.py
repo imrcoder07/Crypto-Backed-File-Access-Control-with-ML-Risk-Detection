@@ -122,6 +122,19 @@ class MLRiskAnalyzer:
                 'message': msg
             })
 
+    def generate_features(self, filename: str, file_size: int, user_trust_score: float = 0.85) -> dict:
+        """Centralized helper to generate standardized ML feature vectors.
+        Serves as the single source of truth for both sync and async paths.
+        """
+        return {
+            'file_size': file_size,
+            'name_length': len(filename),
+            'is_executable': 1 if filename.lower().endswith(('.exe', '.dll', '.bat', '.sh', '.bin')) else 0,
+            'has_special_chars': 1 if not filename.replace('.', '').replace('-', '').replace('_', '').isalnum() else 0,
+            'upload_hour': datetime.datetime.now().hour,
+            'user_trust_score': user_trust_score
+        }
+
     def analyze_risk(self, request_features):
         """Analyzes a request and returns a risk assessment.
         

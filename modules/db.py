@@ -258,13 +258,13 @@ def get_user_files(username: str) -> list:
 def save_request(request_id: str, file_id: str, filename: str, username: str,
                  user_role: str, ml_verdict: str, ml_details: dict,
                  file_size: int, file_size_mb: float,
-                 requires_password: bool = True) -> None:
+                 requires_password: bool = True, status: str = "pending") -> None:
     sql = """
         INSERT INTO requests
             (request_id, file_id, filename, username, user_role,
              ml_verdict, ml_details, file_size, file_size_mb,
-             requires_password, password_provided)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, TRUE)
+             requires_password, password_provided, status)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, TRUE, %s)
         ON CONFLICT (request_id) DO NOTHING;
     """
     with get_db() as conn:
@@ -272,12 +272,12 @@ def save_request(request_id: str, file_id: str, filename: str, username: str,
             cur.execute(sql, (
                 request_id, file_id, filename, username, user_role,
                 ml_verdict, json.dumps(ml_details),
-                file_size, file_size_mb, requires_password,
+                file_size, file_size_mb, requires_password, status
             ))
 
 
 def create_request(request_id: str, username: str, file_id: str, filename: str,
-                   user_role: str, ml_details: dict) -> None:
+                   user_role: str, ml_details: dict, status: str = "pending") -> None:
     """Backward-compatible wrapper used by the upload route."""
     file_info = get_file(file_id) or {}
     file_size = file_info.get('file_size') or 0
@@ -299,7 +299,34 @@ def create_request(request_id: str, username: str, file_id: str, filename: str,
         file_size=file_size,
         file_size_mb=file_size_mb,
         requires_password=True,
+        status=status
     )
+
+
+def update_request_ml_results(request_id: str, ml_verdict: str, ml_details: dict, new_status: str = "pending") -> bool:
+    """Update an existing request with ML risk analysis results and change its status."""
+    sql = """
+        UPDATE requests
+        SET ml_verdict = %s,
+            ml_details = %s,
+            status = %s
+        WHERE request_id = %s
+        RETURNING request_id;
+    """
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (ml_verdict, json.dumps(ml_details), new_status, request_id))
+            return cur.fetchone() is not None
+
+
+def update_request_status_only(request_id: str, new_status: str) -> bool:
+    """Update only the status column of a request."""
+    sql = "UPDATE requests SET status = %s WHERE request_id = %s RETURNING request_id;"
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (new_status, request_id))
+            return cur.fetchone() is not None
+
 
 
 def get_request(request_id: str) -> dict | None:

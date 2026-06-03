@@ -1,0 +1,7 @@
+services:
+  - type: worker
+    name: crypto-async-worker
+    env: python
+    plan: starter # Render Worker services require paid plans
+    buildCommand: pip install -r requirements.txt
+    startCommand: celery -A worker worker --loglevel=info

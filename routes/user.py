@@ -88,30 +88,78 @@ def upload_file():
     # Persist to DB
     db.create_file_record(file_id, username, filename, save_path, file_size)
 
-    # ML Analysis
-    features = {
-        'file_size': file_size,
-        'name_length': len(filename),
-        'is_executable': 1 if filename.lower().endswith(('.exe', '.dll', '.bat', '.sh', '.bin')) else 0,
-        'has_special_chars': 1 if not filename.replace('.', '').replace('-', '').replace('_', '').isalnum() else 0,
-        'upload_hour': 12, 
-        'user_trust_score': 0.85
-    }
-    ml_results = ml_analyzer.analyze_risk(features)
+    # Centralized Feature Generation
+    features = ml_analyzer.generate_features(filename, file_size)
 
-    # Create Request
+    # Async configuration check
+    use_async = os.environ.get("USE_ASYNC_ML", "").lower() == "true"
     req_id = str(uuid.uuid4())
-    db.create_request(req_id, username, file_id, filename, "Upload Request", ml_results)
 
-    audit_ledger.add_event(f"User '{username}' uploaded file: {filename} (ID: {file_id})")
-    db.log_activity(username, "file_upload", f"File: {filename}")
+    if use_async:
+        # ASYNC PATH:
+        # 1. Create a minimal request stub synchronously with status='queued'
+        db.create_request(
+            request_id=req_id,
+            username=username,
+            file_id=file_id,
+            filename=filename,
+            user_role="Upload Request",
+            ml_details={'status': 'queued'},
+            status="queued"
+        )
+        
+        # 2. Enqueue to Celery background task
+        from modules.tasks import run_ml_analysis
+        task = run_ml_analysis.delay(req_id, file_id, filename, features, username)
+        
+        return jsonify({
+            'message': 'File securely encrypted and uploaded. Risk analysis enqueued.',
+            'file_id': file_id,
+            'request_id': req_id,
+            'task_id': task.id,
+            'async': True
+        }), 202
+    else:
+        # SYNCHRONOUS FALLBACK PATH
+        ml_results = ml_analyzer.analyze_risk(features)
+        db.create_request(req_id, username, file_id, filename, "Upload Request", ml_results, status="pending")
+        audit_ledger.add_event(f"User '{username}' uploaded file: {filename} (ID: {file_id})")
+        db.log_activity(username, "file_upload", f"File: {filename}")
+        
+        return jsonify({
+            'message': 'File securely encrypted and uploaded. Pending admin approval.',
+            'file_id': file_id,
+            'request_id': req_id,
+            'ml_analysis': ml_results,
+            'async': False
+        }), 200
+
+@user_bp.route('/api/request_status/<request_id>')
+def get_request_status(request_id):
+    """Retrieve direct DB status to prevent hangs and false positives."""
+    if 'username' not in session:
+        return jsonify({'message': 'Unauthorized'}), 401
+        
+    req = db.get_request(request_id)
+    if not req:
+        return jsonify({'status': 'PENDING', 'message': 'Job is processing or record pending.'})
+        
+    # Check DB status
+    status = req.get('status', 'pending').lower()
     
-    return jsonify({
-        'message': 'File securely encrypted and uploaded. Pending admin approval.',
-        'file_id': file_id,
-        'request_id': req_id,
-        'ml_analysis': ml_results
-    })
+    if status == 'pending' or status == 'approved' or status == 'rejected':
+        return jsonify({
+            'status': 'SUCCESS',
+            'ml_analysis': req.get('ml_details', {}),
+            'request_id': request_id
+        })
+    elif status == 'failed':
+        return jsonify({
+            'status': 'FAILURE',
+            'error': 'Background risk scan execution failed.'
+        })
+    else:
+        return jsonify({'status': 'PENDING', 'message': 'Job is queued or processing.'})
 
 @user_bp.route('/api/user/my_requests')
 def get_user_requests():

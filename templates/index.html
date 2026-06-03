@@ -1789,9 +1789,10 @@
             
             showMessage('user-message-area', '⏳ Uploading & Running ML Analysis...', 'message-info');
             
+            let keepsLoading = false;
             try {
                 setLoading('#upload-btn', true);
-        const response = await fetch('/upload', {
+                const response = await fetch('/upload', {
                     method: 'POST',
                     body: formData
                 });
@@ -1802,28 +1803,60 @@
                     throw new Error(result.message);
                 }
                 
-                const mlColor = result.ml_verdict && result.ml_verdict.includes('Deny') ? 'text-red-400' : 
-                              result.ml_verdict && result.ml_verdict.includes('Allow') ? 'text-green-400' : 'text-yellow-400';
-                
-                showMessage('user-message-area', 
-                    `✅ File uploaded successfully! ML Analysis: <span class="${mlColor}">${SecurityUtils.sanitize(result.ml_verdict || 'Pending')}</span>. Waiting for admin approval.`, 
-                    'message-success'
-                );
-                
-                // Clear the form
-                fileInput.value = '';
-                document.getElementById('crypto-password').value = '';
-                
-                // Reload user requests to show the new pending request
-                setTimeout(() => {
+                if (result.async) {
+                    keepsLoading = true;
+                    showMessage('user-message-area', '🔒 File encrypted and uploaded successfully. Running machine learning risk scans...', 'message-info');
+                    
+                    const pollInterval = setInterval(async () => {
+                        try {
+                            const statusRes = await fetch(`/api/request_status/${result.request_id}`);
+                            if (!statusRes.ok) {
+                                throw new Error('Status check failed');
+                            }
+                            const statusData = await statusRes.json();
+                            
+                            if (statusData.status === 'SUCCESS') {
+                                clearInterval(pollInterval);
+                                setLoading('#upload-btn', false);
+                                
+                                showMessage('user-message-area', '✅ Upload complete! ML Analysis scanned successfully. Waiting for admin approval.', 'message-success');
+                                
+                                fileInput.value = '';
+                                document.getElementById('crypto-password').value = '';
+                                
+                                loadUserRequests();
+                                loadUserFiles();
+                            } else if (statusData.status === 'FAILURE') {
+                                clearInterval(pollInterval);
+                                setLoading('#upload-btn', false);
+                                showMessage('user-message-area', '❌ Upload failed: ML risk scan execution encountered an error.', 'message-error');
+                            }
+                        } catch (pollErr) {
+                            console.error("Polling error:", pollErr);
+                        }
+                    }, 2000);
+                } else {
+                    const mlColor = result.ml_analysis && result.ml_analysis.is_risky ? 'text-red-400' : 'text-green-400';
+                    const verdict = result.ml_analysis && result.ml_analysis.is_risky ? 'Deny/Risky' : 'Allow/Safe';
+                    
+                    showMessage('user-message-area', 
+                        `✅ File uploaded successfully! ML Analysis: <span class="${mlColor}">${SecurityUtils.sanitize(verdict)}</span>. Waiting for admin approval.`, 
+                        'message-success'
+                    );
+                    
+                    fileInput.value = '';
+                    document.getElementById('crypto-password').value = '';
+                    
                     loadUserRequests();
                     loadUserFiles();
-                }, 2000);
+                }
                 
             } catch (error) {
                 showMessage('user-message-area', `Error: Upload failed: ${SecurityUtils.sanitize(error.message)}`, 'message-error');
             } finally {
-                setLoading('#upload-btn', false);
+                if (!keepsLoading) {
+                    setLoading('#upload-btn', false);
+                }
             }
         });
 

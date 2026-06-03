@@ -31,4 +31,4 @@ Flask-Migrate==4.0.5
 
 # Redis Cache and Queue
 redis==8.0.0
-
+celery==5.3.6
