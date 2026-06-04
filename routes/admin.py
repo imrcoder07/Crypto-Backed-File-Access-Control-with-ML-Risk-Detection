@@ -90,7 +90,10 @@ def get_approved_files():
         
     requests = db.get_approved_requests()
     for req in requests:
-        req['approved_at'] = get_time_ago(req.get('approved_at'))
+        # NOTE: approved_at is intentionally kept as a raw ISO timestamp string.
+        # The frontend uses new Date(file.approved_at).toLocaleString() to format it.
+        # Do NOT transform it with get_time_ago() — that produces "X days ago" which
+        # new Date() cannot parse, causing "Invalid Date" in the UI.
         req['upload_time'] = get_time_ago(req.get('upload_time'))
         
         file_id = req.get('file_id')

@@ -1480,6 +1480,35 @@
             }
         };
 
+        /**
+         * formatTimestamp — robust date formatter used across all dashboards.
+         *
+         * Handles:  null | undefined | empty string | ISO 8601 | PostgreSQL timestamps
+         * Never returns: "Invalid Date"
+         *
+         * @param {string|null|undefined} value  - The raw timestamp value from the API.
+         * @param {string} [fallback='Not Available'] - Text shown when value is absent or invalid.
+         * @returns {string}
+         */
+        function formatTimestamp(value, fallback = 'Not Available') {
+            // Guard: null, undefined, or empty string
+            if (value === null || value === undefined || value === '') {
+                return fallback;
+            }
+            // Guard: already a human-readable relative string (e.g. "3 days ago", "Never", "Just now")
+            // These cannot be parsed by the Date constructor — return as-is.
+            if (typeof value === 'string' && /ago|never|just now/i.test(value)) {
+                return value;
+            }
+            // Try to construct a Date object
+            const date = new Date(value);
+            // isNaN check is the standard guard against Invalid Date
+            if (isNaN(date.getTime())) {
+                return fallback;
+            }
+            return date.toLocaleString();
+        }
+
         // =============================================
         // DASHBOARD & PROFILE LOADING
         // =============================================
@@ -1923,9 +1952,7 @@
                 const fileSizeMB = file.file_size_mb || (file.file_size / (1024 * 1024)).toFixed(2);
                 const mlDetails = file.ml_details || {};
                 const modelPredictions = mlDetails.model_predictions || {};
-                const lastAccessed = file.last_accessed === 'Never' ? 
-                    'Never' : 
-                    new Date(file.last_accessed).toLocaleString();
+                const lastAccessed = formatTimestamp(file.last_accessed, 'Never');
                 
                 // Security improvement: show only password requirements, never the password value.
                 const passwordDisplay = file.requires_password ? `
@@ -1977,7 +2004,7 @@
                                     </div>
                                     <div>
                                         <p class="text-gray-500">Approval Time</p>
-                                        <p class="text-white">${new Date(file.approved_at).toLocaleString()}</p>
+                                        <p class="text-white">${formatTimestamp(file.approved_at)}</p>
                                     </div>
                                     <div>
                                         <p class="text-gray-500">Last Accessed</p>
