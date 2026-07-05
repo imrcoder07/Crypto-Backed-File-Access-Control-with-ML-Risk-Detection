@@ -982,22 +982,40 @@
 
                     <!-- My Requests Page -->
                     <div id="user-requests-page" class="dashboard-page">
-                        <h2 class="text-3xl font-bold text-white mb-6">⏳ My File Requests</h2>
+                        <div class="flex justify-between items-end mb-6">
+                            <div>
+                                <h2 class="font-display-lg text-display-lg text-primary uppercase tracking-widest leading-none">Access Requests</h2>
+                                <p class="text-on-surface-variant font-data-mono text-[10px] mt-1 opacity-60">MONITOR VERDICTS & CRYPTO OPERATIONS</p>
+                            </div>
+                            <div class="px-3 py-1 glass-panel border border-primary/20 rounded flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-secondary animate-pulse"></div>
+                                <span class="font-data-mono text-[11px] text-secondary">QUEUE ACTIVE</span>
+                            </div>
+                        </div>
                         <div id="user-requests-list" class="space-y-4">
                             <div class="flex items-center justify-center py-8">
                                 <div class="loading-spinner"></div>
-                                <span class="ml-2 text-gray-500">Loading requests...</span>
+                                <span class="ml-2 text-on-surface-variant font-data-mono">Syncing request queue...</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Activity Page -->
                     <div id="user-activity-page" class="dashboard-page">
-                        <h2 class="text-3xl font-bold text-white mb-6">📊 My Recent Activity</h2>
-                        <div id="user-activity-log" class="glass-card p-4 rounded-lg text-sm space-y-2 file-list-container">
+                        <div class="flex justify-between items-end mb-6">
+                            <div>
+                                <h2 class="font-display-lg text-display-lg text-primary uppercase tracking-widest leading-none">Audit Trail</h2>
+                                <p class="text-on-surface-variant font-data-mono text-[10px] mt-1 opacity-60">IMMUTABLE OPERATIONS CHRONOLOGY</p>
+                            </div>
+                            <div class="px-3 py-1 glass-panel border border-primary/20 rounded flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-secondary animate-pulse"></div>
+                                <span class="font-data-mono text-[11px] text-secondary">AUDIT FEED LIVE</span>
+                            </div>
+                        </div>
+                        <div id="user-activity-log" class="glass-panel p-6 rounded-lg space-y-4 file-list-container">
                             <div class="flex items-center justify-center py-8">
                                 <div class="loading-spinner"></div>
-                                <span class="ml-2 text-gray-500">Loading activity...</span>
+                                <span class="ml-2 text-on-surface-variant font-data-mono">Retrieving audit trail...</span>
                             </div>
                         </div>
                     </div>
@@ -2127,7 +2145,13 @@
                 const requestsList = document.getElementById('user-requests-list');
                 
                 if (!userRequests || userRequests.length === 0) {
-                    requestsList.innerHTML = '<p class="text-gray-500 text-center py-8">No file requests yet.</p>';
+                    requestsList.innerHTML = `
+                        <div class="flex flex-col items-center justify-center py-12 text-center">
+                            <span class="material-symbols-outlined text-[40px] text-outline mb-3">history_edu</span>
+                            <p class="font-data-mono text-xs text-on-surface-variant">No Access Requests Pending</p>
+                            <p class="text-[10px] text-outline/50 uppercase mt-1">Upload files to initiate access request sequence</p>
+                        </div>
+                    `;
                     return;
                 }
                 
@@ -2140,59 +2164,78 @@
                     const fileSizeMB = request.file_size_mb || (request.file_size / (1024 * 1024)).toFixed(2);
                     const mlDetails = request.ml_details || {};
                     
+                    const rfVerdict = mlDetails.model_predictions?.random_forest ? mlDetails.model_predictions.random_forest.toUpperCase() : 'ALLOW';
+                    const svmVerdict = mlDetails.model_predictions?.svm ? mlDetails.model_predictions.svm.toUpperCase() : 'ALLOW';
+                    const isoVerdict = mlDetails.model_predictions?.isolation_forest ? mlDetails.model_predictions.isolation_forest.toUpperCase() : 'ALLOW';
+                    
+                    const isVerdictAllow = (mlDetails.final_verdict || 'Allow').toLowerCase() === 'allow';
+                    const verdictColor = isVerdictAllow ? 'text-secondary' : 'text-error';
+                    
                     html += `
-                        <div class="glass-card p-6 rounded-xl">
-                            <div class="flex justify-between items-start">
+                        <div class="glass-panel p-6 rounded-lg flex flex-col gap-4 border border-white/05 hover:border-primary/20 transition-all duration-150">
+                            <div class="flex justify-between items-start flex-wrap gap-4">
                                 <div class="flex-1">
-                                    <div class="flex items-center gap-3 mb-2">
-                                        <h3 class="font-bold text-white text-lg">${SecurityUtils.sanitize(request.filename)}</h3>
+                                    <div class="flex items-center gap-3 mb-1 flex-wrap">
+                                        <h3 class="font-data-mono text-sm font-bold text-on-surface">${SecurityUtils.sanitize(request.filename)}</h3>
                                         <span class="status-badge ${statusColor}">${statusText}</span>
-                                        <span class="text-xs text-gray-500">${fileSizeMB} MB</span>
+                                        <span class="font-data-mono text-[10px] text-on-surface-variant/60 bg-white/05 px-2 py-0.5 rounded">${fileSizeMB} MB</span>
                                     </div>
-                                    
-                                    <p class="text-sm text-gray-500 mb-3">Uploaded: ${SecurityUtils.sanitize(request.time_ago || 'Recently')}</p>
-                                    
-                                    <!-- Enhanced ML Verdict Display -->
-                                    <div class="mb-3 p-3 rounded-lg bg-gray-800 border border-gray-600">
-                                        <p class="text-sm font-semibold text-gray-400 mb-1">🤖 ML Risk Assessment</p>
-                                        <p class="font-mono text-green-400 text-sm">${SecurityUtils.sanitize(mlDetails.final_verdict || 'Allow')}</p>
-                                        <div class="confidence-bar">
-                                            <div class="confidence-level" style="width: ${parseFloat(mlDetails.confidence) || '85'}%"></div>
-                                        </div>
-                                        <p class="text-xs text-gray-500 mt-1">Confidence: ${SecurityUtils.sanitize(mlDetails.confidence || '85.0%')}</p>
-                                        <div class="flex gap-2 mt-2 text-xs">
-                                            <span class="bg-blue-900/50 px-2 py-1 rounded">RF: ${SecurityUtils.sanitize(mlDetails.model_predictions?.random_forest || 'Allow')}</span>
-                                            <span class="bg-purple-900/50 px-2 py-1 rounded">SVM: ${SecurityUtils.sanitize(mlDetails.model_predictions?.svm || 'Allow')}</span>
-                                            <span class="bg-yellow-900/50 px-2 py-1 rounded">ISO: ${SecurityUtils.sanitize(mlDetails.model_predictions?.isolation_forest || 'Allow')}</span>
-                                        </div>
-                                    </div>
-                                    
-                                    ${request.admin_notes ? `
-                                        <div class="mb-2">
-                                            <p class="text-sm text-gray-400">Admin Notes:</p>
-                                            <p class="text-sm text-gray-500 bg-gray-800 p-2 rounded">${SecurityUtils.sanitize(request.admin_notes)}</p>
-                                        </div>
-                                    ` : ''}
-                                    
-                                    ${request.approved_by ? `
-                                        <p class="text-sm text-green-400">✅ Approved by: ${SecurityUtils.sanitize(request.approved_by)} at ${new Date(request.approved_at).toLocaleString()}</p>
-                                    ` : ''}
-                                    
-                                    ${request.requires_password ? `
-                                        <p class="text-sm text-yellow-400 mt-2">🔒 Password Protected</p>
-                                    ` : ''}
+                                    <p class="font-data-mono text-[10px] text-on-surface-variant/60 uppercase">SUBMITTED: ${SecurityUtils.sanitize(request.time_ago || 'Recently')}</p>
                                 </div>
-                                <div class="text-right ml-4">
-                                    <p class="font-bold text-lg ${statusColor.replace('status-', 'text-')}">${statusText}</p>
-                                    <p class="text-sm text-gray-500">${SecurityUtils.sanitize(request.admin_action || 'Pending review')}</p>
+                                
+                                <div class="text-right flex flex-col items-end gap-1">
+                                    <span class="font-data-mono text-xs uppercase font-bold ${isVerdictAllow ? 'text-secondary' : 'text-error'}">${statusText}</span>
+                                    <p class="font-data-mono text-[10px] text-on-surface-variant/60 uppercase">${SecurityUtils.sanitize(request.admin_action || 'Pending review')}</p>
                                     ${request.status === 'approved' ? 
                                         `<button onclick="downloadApprovedFile('${request.file_id}', '${SecurityUtils.sanitize(request.filename)}')" 
-                                                class="mt-2 bg-indigo-600 text-white px-4 py-2 rounded text-sm hover:bg-indigo-700 transition-colors">
-                                            📥 Download File
+                                                class="mt-1 flex items-center justify-center gap-1 bg-primary text-on-primary px-3 py-1.5 rounded text-xs font-bold hover:brightness-110 active:scale-95 transition-all">
+                                            <span class="material-symbols-outlined text-xs">download</span>
+                                            <span>RETRIEVE</span>
                                         </button>` : 
                                         ''}
                                 </div>
                             </div>
+                            
+                            <!-- Collapsible / Standard ML Verdict section -->
+                            <div class="p-3 bg-surface-container rounded border border-white/05">
+                                <div class="flex items-center gap-1.5 mb-2">
+                                    <span class="material-symbols-outlined text-sm text-primary">psychology</span>
+                                    <span class="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">ML Risk Assessment</span>
+                                </div>
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <span class="font-data-mono text-xs uppercase ${verdictColor}">${SecurityUtils.sanitize(mlDetails.final_verdict || 'Allow')}</span>
+                                    <span class="font-data-mono text-[10px] text-on-surface-variant/60">Confidence: ${SecurityUtils.sanitize(mlDetails.confidence || '85.0%')}</span>
+                                </div>
+                                <div class="confidence-bar">
+                                    <div class="confidence-level" style="width: ${parseFloat(mlDetails.confidence) || '85'}%"></div>
+                                </div>
+                                <div class="flex flex-wrap gap-2 mt-3 font-data-mono text-[9px] uppercase">
+                                    <span class="px-2 py-0.5 bg-blue-900/20 text-blue-400 border border-blue-500/20 rounded">RF: ${rfVerdict}</span>
+                                    <span class="px-2 py-0.5 bg-purple-900/20 text-purple-400 border border-purple-500/20 rounded">SVM: ${svmVerdict}</span>
+                                    <span class="px-2 py-0.5 bg-amber-900/20 text-amber-400 border border-amber-500/20 rounded">ISO: ${isoVerdict}</span>
+                                </div>
+                            </div>
+
+                            ${request.admin_notes ? `
+                                <div class="p-3 bg-surface-container border-l-2 border-primary/30 rounded-r text-xs">
+                                    <p class="font-label-caps text-[10px] text-on-surface-variant/60 uppercase mb-1">Admin Notes</p>
+                                    <p class="font-body-sm text-on-surface-variant">${SecurityUtils.sanitize(request.admin_notes)}</p>
+                                </div>
+                            ` : ''}
+                            
+                            ${request.approved_by ? `
+                                <div class="flex items-center gap-1 text-[10px] font-data-mono text-secondary uppercase bg-secondary/5 border border-secondary/20 p-2 rounded">
+                                    <span class="material-symbols-outlined text-sm">check_circle</span>
+                                    <span>APPROVED BY ${SecurityUtils.sanitize(request.approved_by)} AT ${new Date(request.approved_at).toLocaleString()}</span>
+                                </div>
+                            ` : ''}
+                            
+                            ${request.requires_password ? `
+                                <div class="flex items-center gap-1 text-[10px] font-data-mono text-amber-400 uppercase bg-amber-400/5 border border-amber-400/20 p-2 rounded">
+                                    <span class="material-symbols-outlined text-sm">lock</span>
+                                    <span>Password Protection Enforced</span>
+                                </div>
+                            ` : ''}
                         </div>
                     `;
                 });
@@ -2213,15 +2256,51 @@
                 const activityLog = document.getElementById('user-activity-log');
                 
                 if (!data.user_activity || data.user_activity.length === 0) {
-                    activityLog.innerHTML = '<p class="text-gray-500 text-center py-4">No activity recorded yet.</p>';
+                    activityLog.innerHTML = `
+                        <div class="flex flex-col items-center justify-center py-12 text-center">
+                            <span class="material-symbols-outlined text-[40px] text-outline mb-3">history</span>
+                            <p class="font-data-mono text-xs text-on-surface-variant">Audit Trail Empty</p>
+                            <p class="text-[10px] text-outline/50 uppercase mt-1">No operations recorded on session</p>
+                        </div>
+                    `;
                     return;
                 }
                 
                 let html = '';
                 data.user_activity.forEach(activity => {
+                    const str = activity.toLowerCase();
+                    let icon = 'history';
+                    let colorClass = 'text-outline bg-surface-container';
+                    let borderClass = 'border-l-outline-variant';
+                    
+                    if (str.includes('upload')) {
+                        icon = 'cloud_upload';
+                        colorClass = 'text-primary bg-primary/10';
+                        borderClass = 'border-l-primary';
+                    } else if (str.includes('download') || str.includes('decrypt') || str.includes('retrieve')) {
+                        icon = 'download';
+                        colorClass = 'text-secondary bg-secondary/10';
+                        borderClass = 'border-l-secondary';
+                    } else if (str.includes('login') || str.includes('auth')) {
+                        icon = 'login';
+                        colorClass = 'text-primary-container bg-primary-container/10';
+                        borderClass = 'border-l-primary-container';
+                    }
+                    
                     html += `
-                        <div class="p-3 bg-black/20 rounded-lg mb-2 border-l-4 border-indigo-500">
-                            <p class="text-white text-sm">${SecurityUtils.sanitize(activity)}</p>
+                        <div class="flex items-start gap-4 py-3 border-b border-white/05 relative">
+                            <!-- Left Accent line -->
+                            <div class="w-0.5 self-stretch ${borderClass} opacity-40"></div>
+                            
+                            <!-- Icon Square -->
+                            <div class="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded ${colorClass} border border-white/05">
+                                <span class="material-symbols-outlined text-[18px]">${icon}</span>
+                            </div>
+                            
+                            <!-- Body content -->
+                            <div class="flex-1 min-w-0">
+                                <p class="font-body-sm text-on-surface text-sm leading-snug break-words">${SecurityUtils.sanitize(activity)}</p>
+                            </div>
                         </div>
                     `;
                 });
@@ -2235,104 +2314,6 @@
             }
         }
 
-        // =============================================
-        // FILE UPLOAD WITH REAL-TIME ML
-        // =============================================
-        document.getElementById('upload-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const fileInput = document.getElementById('file-input');
-            const cryptoPassword = document.getElementById('crypto-password').value;
-            
-            if (!fileInput.files[0]) {
-                showMessage('user-message-area', 'Error: Please select a file', 'message-error');
-                return;
-            }
-            
-            if (!cryptoPassword) {
-                showMessage('user-message-area', 'Error: Please enter an encryption password', 'message-error');
-                return;
-            }
-            
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-            formData.append('password', cryptoPassword);
-            
-            showMessage('user-message-area', '⏳ Uploading & Running ML Analysis...', 'message-info');
-            
-            let keepsLoading = false;
-            try {
-                setLoading('#upload-btn', true);
-                const response = await fetch('/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const result = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(result.message);
-                }
-                
-                if (result.async) {
-                    keepsLoading = true;
-                    showMessage('user-message-area', '🔒 File encrypted and uploaded successfully. Running machine learning risk scans...', 'message-info');
-                    
-                    const pollInterval = setInterval(async () => {
-                        try {
-                            const statusRes = await fetch(`/api/request_status/${result.request_id}`);
-                            if (!statusRes.ok) {
-                                throw new Error('Status check failed');
-                            }
-                            const statusData = await statusRes.json();
-                            
-                            if (statusData.status === 'SUCCESS') {
-                                clearInterval(pollInterval);
-                                setLoading('#upload-btn', false);
-                                
-                                showMessage('user-message-area', '✅ Upload complete! ML Analysis scanned successfully. Waiting for admin approval.', 'message-success');
-                                
-                                fileInput.value = '';
-                                document.getElementById('crypto-password').value = '';
-                                
-                                loadUserRequests();
-                                loadUserFiles();
-                            } else if (statusData.status === 'FAILURE') {
-                                clearInterval(pollInterval);
-                                setLoading('#upload-btn', false);
-                                showMessage('user-message-area', '❌ Upload failed: ML risk scan execution encountered an error.', 'message-error');
-                            }
-                        } catch (pollErr) {
-                            console.error("Polling error:", pollErr);
-                        }
-                    }, 2000);
-                } else {
-                    const mlColor = result.ml_analysis && result.ml_analysis.is_risky ? 'text-red-400' : 'text-green-400';
-                    const verdict = result.ml_analysis && result.ml_analysis.is_risky ? 'Deny/Risky' : 'Allow/Safe';
-                    
-                    showMessage('user-message-area', 
-                        `✅ File uploaded successfully! ML Analysis: <span class="${mlColor}">${SecurityUtils.sanitize(verdict)}</span>. Waiting for admin approval.`, 
-                        'message-success'
-                    );
-                    
-                    fileInput.value = '';
-                    document.getElementById('crypto-password').value = '';
-                    
-                    loadUserRequests();
-                    loadUserFiles();
-                }
-                
-            } catch (error) {
-                showMessage('user-message-area', `Error: Upload failed: ${SecurityUtils.sanitize(error.message)}`, 'message-error');
-            } finally {
-                if (!keepsLoading) {
-                    setLoading('#upload-btn', false);
-                }
-            }
-        });
-
-        // =============================================
-        // ENHANCED APPROVED FILES MANAGEMENT - FIXED
-        // =============================================
         async function loadApprovedFiles(forceRefresh = false) {
             try {
                 const now = Date.now();
