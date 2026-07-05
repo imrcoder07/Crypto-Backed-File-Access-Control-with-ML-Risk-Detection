@@ -670,27 +670,56 @@
 
     <!-- LOGIN VIEW -->
     <div id="login-view" class="view">
-        <div class="flex items-center justify-center w-full h-full p-4">
-            <div class="glass-card p-8 rounded-2xl shadow-2xl w-full max-w-sm">
-                <h1 class="text-2xl font-bold mb-6 text-center text-white">🔐 Login</h1>
+        <div class="flex items-center justify-center w-full h-full p-4 relative z-10">
+            <div class="glass-card p-8 rounded-xl shadow-2xl w-full max-w-[400px]">
+                <!-- Header Identity -->
+                <div class="text-center mb-6">
+                    <div class="w-12 h-12 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <span class="material-symbols-outlined text-primary text-[24px]">vpn_key</span>
+                    </div>
+                    <h2 class="font-headline-md text-headline-md text-on-surface">Ops Center Login</h2>
+                    <p class="text-[10px] font-data-mono text-on-surface-variant/60 uppercase mt-1 tracking-widest">Crypto Access Control v1.0</p>
+                </div>
+
+                <!-- Tab Switch -->
+                <div class="flex border-b border-outline-variant/30 mb-6 font-data-mono text-xs uppercase">
+                    <button type="button" class="flex-1 pb-3 text-center border-b-2 border-primary text-primary font-bold">Sign In</button>
+                    <button type="button" onclick="document.getElementById('go-to-signup').click()" class="flex-1 pb-3 text-center text-on-surface-variant font-medium hover:text-on-surface hover:border-b-2 hover:border-outline-variant transition-all">Create Account</button>
+                </div>
+
+                <!-- Form -->
                 <form id="login-form" class="space-y-4">
-                    <div>
-                        <label for="login-username" class="block text-sm font-medium text-gray-400 mb-2">Username</label>
+                    <div class="relative group">
+                        <label for="login-username" class="absolute -top-2 left-3 px-1 bg-[#090e17] text-[10px] font-label-caps text-primary tracking-widest z-10 uppercase">Operator ID</label>
                         <input type="text" id="login-username" class="input-field" placeholder="Enter username" required>
                     </div>
-                    <div>
-                        <label for="login-password" class="block text-sm font-medium text-gray-400 mb-2">Password</label>
-                        <input type="password" id="login-password" class="input-field" placeholder="Enter password" required>
+                    <div class="relative group">
+                        <label for="login-password" class="absolute -top-2 left-3 px-1 bg-[#090e17] text-[10px] font-label-caps text-primary tracking-widest z-10 uppercase">Passphrase</label>
+                        <div class="relative">
+                            <input type="password" id="login-password" class="input-field" placeholder="••••••••••••" required>
+                            <button type="button" onclick="const p = this.previousElementSibling; p.type = p.type === 'password' ? 'text' : 'password'; this.querySelector('span').textContent = p.type === 'password' ? 'visibility' : 'visibility_off';" class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-all">
+                                <span class="material-symbols-outlined text-sm">visibility</span>
+                            </button>
+                        </div>
                     </div>
-                    <div id="login-error" class="text-red-400 text-xs mt-1 h-4"></div>
-                    <button type="submit" id="login-btn" class="w-full btn-primary mt-4">Login</button>
-                    <p class="text-center text-sm text-gray-500 mt-4">No account? <a href="#" id="go-to-signup" class="font-medium text-indigo-400 hover:underline">Sign Up</a></p>
+
+                    <div id="login-error" class="text-error font-data-mono text-[10px] uppercase mt-2 h-4 text-center"></div>
+                    
+                    <button type="submit" id="login-btn" class="w-full btn-primary mt-4 flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">login</span>
+                        <span>Authenticate Operator</span>
+                    </button>
+                    
+                    <!-- Hidden trigger for JS event listener -->
+                    <a href="#" id="go-to-signup" class="hidden"></a>
                 </form>
-                
-                <div class="mt-6 p-4 bg-gray-800 rounded-lg">
-                    <p class="text-xs text-gray-500 mb-2">Demo Credentials:</p>
-                    <div class="text-xs space-y-1">
-                        <p><span class="text-red-400">Admin:</span> admin / admin123</p>
+
+                <!-- Demo Clearance Panel -->
+                <div class="mt-6 p-4 glass-panel border-t-2 border-t-primary rounded flex flex-col gap-1 text-xs">
+                    <p class="font-label-caps text-label-caps text-primary uppercase">Demo Clearance</p>
+                    <div class="font-data-mono text-on-surface-variant text-[11px] flex justify-between">
+                        <span>CLEARANCE_ROOT:</span>
+                        <span class="text-on-surface">admin / admin123</span>
                     </div>
                 </div>
             </div>
@@ -699,21 +728,70 @@
 
     <!-- SIGNUP VIEW -->
     <div id="signup-view" class="view">
-        <div class="flex items-center justify-center w-full h-full p-4">
-            <div class="glass-card p-8 rounded-2xl shadow-2xl w-full max-w-sm">
-                <h1 class="text-2xl font-bold mb-6 text-center text-white">📝 Create Account</h1>
+        <div class="flex items-center justify-center w-full h-full p-4 relative z-10">
+            <div class="glass-card p-8 rounded-xl shadow-2xl w-full max-w-[400px]">
+                <!-- Header Identity -->
+                <div class="text-center mb-6">
+                    <div class="w-12 h-12 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <span class="material-symbols-outlined text-primary text-[24px]">person_add</span>
+                    </div>
+                    <h2 class="font-headline-md text-headline-md text-on-surface">Operator Register</h2>
+                    <p class="text-[10px] font-data-mono text-on-surface-variant/60 uppercase mt-1 tracking-widest">Crypto Access Control v1.0</p>
+                </div>
+
+                <!-- Tab Switch -->
+                <div class="flex border-b border-outline-variant/30 mb-6 font-data-mono text-xs uppercase">
+                    <button type="button" onclick="document.getElementById('go-to-login').click()" class="flex-1 pb-3 text-center text-on-surface-variant font-medium hover:text-on-surface hover:border-b-2 hover:border-outline-variant transition-all">Sign In</button>
+                    <button type="button" class="flex-1 pb-3 text-center border-b-2 border-primary text-primary font-bold">Create Account</button>
+                </div>
+
+                <!-- Form -->
                 <form id="signup-form" class="space-y-4">
-                    <div>
-                        <label for="signup-username" class="block text-sm font-medium text-gray-400 mb-2">Username</label>
+                    <div class="relative group">
+                        <label for="signup-username" class="absolute -top-2 left-3 px-1 bg-[#090e17] text-[10px] font-label-caps text-primary tracking-widest z-10 uppercase">Choose Operator ID</label>
                         <input type="text" id="signup-username" class="input-field" placeholder="Choose username" required>
                     </div>
-                    <div>
-                        <label for="signup-password" class="block text-sm font-medium text-gray-400 mb-2">Password</label>
-                        <input type="password" id="signup-password" class="input-field" placeholder="Create password" required>
+                    <div class="relative group">
+                        <label for="signup-password" class="absolute -top-2 left-3 px-1 bg-[#090e17] text-[10px] font-label-caps text-primary tracking-widest z-10 uppercase">Create Passphrase</label>
+                        <div class="relative">
+                            <input type="password" id="signup-password" class="input-field" placeholder="••••••••••••" required oninput="
+                                const val = this.value;
+                                const meter = document.getElementById('pw-strength-bar');
+                                const label = document.getElementById('pw-strength-label');
+                                let score = 0;
+                                if (val.length >= 8) score++;
+                                if (/[A-Z]/.test(val)) score++;
+                                if (/[0-9]/.test(val)) score++;
+                                if (/[^A-Za-z0-9]/.test(val)) score++;
+                                
+                                const colors = ['bg-error', 'bg-tertiary', 'bg-primary-container', 'bg-secondary'];
+                                const labels = ['Weak', 'Fair', 'Good', 'Strong'];
+                                
+                                meter.style.width = val.length === 0 ? '0%' : (score * 25) + '%';
+                                meter.className = 'h-full transition-all ' + (val.length === 0 ? '' : colors[Math.max(0, score-1)]);
+                                label.textContent = val.length === 0 ? '' : labels[Math.max(0, score-1)];
+                            ">
+                            <button type="button" onclick="const p = this.previousElementSibling; p.type = p.type === 'password' ? 'text' : 'password'; this.querySelector('span').textContent = p.type === 'password' ? 'visibility' : 'visibility_off';" class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-all">
+                                <span class="material-symbols-outlined text-sm">visibility</span>
+                            </button>
+                        </div>
+                        <div class="mt-2 flex items-center justify-between text-[10px] font-data-mono px-1">
+                            <div class="h-1.5 w-32 bg-white/05 rounded-full overflow-hidden">
+                                <div id="pw-strength-bar" class="h-full w-0"></div>
+                            </div>
+                            <span id="pw-strength-label" class="text-outline uppercase"></span>
+                        </div>
                     </div>
-                    <div id="signup-error" class="text-red-400 text-xs mt-1 h-4"></div>
-                    <button type="submit" id="signup-btn" class="w-full btn-primary mt-4">Sign Up</button>
-                    <p class="text-center text-sm text-gray-500 mt-4">Have an account? <a href="#" id="go-to-login" class="font-medium text-indigo-400 hover:underline">Login</a></p>
+
+                    <div id="signup-error" class="text-error font-data-mono text-[10px] uppercase mt-2 h-4 text-center"></div>
+                    
+                    <button type="submit" id="signup-btn" class="w-full btn-primary mt-4 flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">person_add</span>
+                        <span>Register Operator</span>
+                    </button>
+                    
+                    <!-- Hidden trigger for JS event listener -->
+                    <a href="#" id="go-to-login" class="hidden"></a>
                 </form>
             </div>
         </div>
