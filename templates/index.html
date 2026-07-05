@@ -592,55 +592,77 @@
 
     <!-- LANDING VIEW -->
     <div id="landing-view" class="view active">
-        <div class="landing-content">
-            <h1 class="text-5xl md:text-7xl font-black text-white mb-6">
-                Secure File Access 
-                <span class="text-indigo-400">Control</span>
+        <div class="landing-content max-w-5xl mx-auto px-6 py-12 flex flex-col items-center justify-center min-h-screen text-center relative z-10">
+            <!-- Header Tech Badge -->
+            <div class="mb-4 px-3 py-1 glass-panel border border-primary/20 rounded-full inline-flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>
+                <span class="font-data-mono text-[10px] text-secondary tracking-widest">SECURE OPERATIONS PORTAL ACTIVE</span>
+            </div>
+
+            <!-- Hero Section -->
+            <h1 class="font-display-lg text-display-lg text-primary uppercase tracking-widest leading-tight max-w-4xl mb-4">
+                Crypto Access Control
             </h1>
-            <p class="text-lg md:text-xl text-indigo-300 mb-8 mx-auto max-w-3xl">
-                Enterprise-grade file security powered by AI, Blockchain & Military Encryption. 
-                Protect your documents with advanced threat detection and immutable audit trails.
+            <p class="font-data-mono text-xs md:text-sm text-secondary uppercase tracking-wider mb-6">
+                Intelligent Risk Detector & Immutable Blockchain Ledger
             </p>
-            <button id="launch-app-btn" class="btn-primary text-lg px-8 py-4 text-xl mb-12">
-                🚀 Launch Security Portal
+            <p class="font-body-sm text-on-surface-variant text-base max-w-3xl mb-8 leading-relaxed">
+                A decentralized security gateway featuring tri-model machine learning threat detection, 
+                AES-256-GCM hardware encryption, and an immutable private blockchain audit logging system.
+            </p>
+
+            <!-- Call to Action -->
+            <button id="launch-app-btn" class="btn-primary text-sm px-8 py-3.5 tracking-wider active:scale-95 transition-all mb-16 flex items-center gap-2">
+                <span class="material-symbols-outlined">rocket_launch</span>
+                <span>Launch Security Portal</span>
             </button>
 
             <!-- Feature Showcase -->
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <div class="text-4xl mb-4">🤖</div>
-                    <h3 class="text-xl font-bold text-white mb-2">AI-Powered Threat Detection</h3>
-                    <p class="text-gray-500">Advanced machine learning models analyze files in real-time to detect potential threats before they reach your system.</p>
+            <div class="feature-grid w-full">
+                <!-- Feature 1: AI Risk Analysis -->
+                <div class="feature-card glass-panel p-6 flex flex-col items-center text-center">
+                    <div class="w-12 h-12 flex items-center justify-center bg-primary/10 rounded-xl mb-4 border border-primary/20">
+                        <span class="material-symbols-outlined text-primary text-[24px]">psychology</span>
+                    </div>
+                    <h3 class="font-headline-md text-headline-md text-on-surface mb-2">Tri-Model ML Risk Analyzer</h3>
+                    <p class="font-body-sm text-on-surface-variant text-sm leading-relaxed">
+                        Employs a voting classifier (Random Forest, SVM, and Isolation Forest) to dynamically analyze file metadata and flag high-risk transfers.
+                    </p>
                 </div>
-                <div class="feature-card">
-                    <div class="text-4xl mb-4">⛓️</div>
-                    <h3 class="text-xl font-bold text-white mb-2">Blockchain Audit Trail</h3>
-                    <p class="text-gray-500">Every file access and security event is immutably recorded on our blockchain for complete transparency and auditability.</p>
+
+                <!-- Feature 2: Immutable Blockchain Ledger -->
+                <div class="feature-card glass-panel p-6 flex flex-col items-center text-center">
+                    <div class="w-12 h-12 flex items-center justify-center bg-secondary/10 rounded-xl mb-4 border border-secondary/20">
+                        <span class="material-symbols-outlined text-secondary text-[24px]">fact_check</span>
+                    </div>
+                    <h3 class="font-headline-md text-headline-md text-on-surface mb-2">Blockchain Audit Trails</h3>
+                    <p class="font-body-sm text-on-surface-variant text-sm leading-relaxed">
+                        Every upload, approval verdict, and decryption event is immutably sealed inside sequential blocks, providing a tamper-proof audit trail.
+                    </p>
                 </div>
-                <div class="feature-card">
-                    <div class="text-4xl mb-4">🔒</div>
-                    <h3 class="text-xl font-bold text-white mb-2">Military-Grade Encryption</h3>
-                    <p class="text-gray-500">Your files are protected with AES-256 encryption and secure key management, ensuring maximum data protection.</p>
+
+                <!-- Feature 3: Cryptographic Shield -->
+                <div class="feature-card glass-panel p-6 flex flex-col items-center text-center">
+                    <div class="w-12 h-12 flex items-center justify-center bg-tertiary/10 rounded-xl mb-4 border border-tertiary/20">
+                        <span class="material-symbols-outlined text-tertiary text-[24px]">shield</span>
+                    </div>
+                    <h3 class="font-headline-md text-headline-md text-on-surface mb-2">End-to-End Cryptography</h3>
+                    <p class="font-body-sm text-on-surface-variant text-sm leading-relaxed">
+                        Protects data at-rest using industrial AES-256 encryption. Decryption keys are tightly controlled and require administrative release.
+                    </p>
                 </div>
             </div>
 
-            <!-- Stats -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
-                <div class="text-center">
-                    <div class="text-2xl md:text-3xl font-bold text-white">1,250+</div>
-                    <div class="text-gray-500 text-sm">Files Secured</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl md:text-3xl font-bold text-white">8,900+</div>
-                    <div class="text-gray-500 text-sm">Security Events</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl md:text-3xl font-bold text-white">15,600+</div>
-                    <div class="text-gray-500 text-sm">Blockchain Records</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl md:text-3xl font-bold text-white">99.9%</div>
-                    <div class="text-gray-500 text-sm">Uptime</div>
+            <!-- Technology Badges -->
+            <div class="mt-16 w-full max-w-3xl">
+                <p class="font-label-caps text-label-caps text-outline mb-6">INTEGRATION FRAMEWORKS</p>
+                <div class="flex flex-wrap justify-center gap-3">
+                    <span class="px-3 py-1.5 bg-surface-container/30 border border-outline-variant/30 text-on-surface-variant font-data-mono text-[10px] rounded uppercase tracking-wider">Flask / Python</span>
+                    <span class="px-3 py-1.5 bg-surface-container/30 border border-outline-variant/30 text-on-surface-variant font-data-mono text-[10px] rounded uppercase tracking-wider">PostgreSQL DB</span>
+                    <span class="px-3 py-1.5 bg-surface-container/30 border border-outline-variant/30 text-on-surface-variant font-data-mono text-[10px] rounded uppercase tracking-wider">Celery Async</span>
+                    <span class="px-3 py-1.5 bg-surface-container/30 border border-outline-variant/30 text-on-surface-variant font-data-mono text-[10px] rounded uppercase tracking-wider">Redis Broker</span>
+                    <span class="px-3 py-1.5 bg-surface-container/30 border border-outline-variant/30 text-on-surface-variant font-data-mono text-[10px] rounded uppercase tracking-wider">Scikit-Learn ML</span>
+                    <span class="px-3 py-1.5 bg-surface-container/30 border border-outline-variant/30 text-on-surface-variant font-data-mono text-[10px] rounded uppercase tracking-wider">Tailwind Config</span>
                 </div>
             </div>
         </div>
