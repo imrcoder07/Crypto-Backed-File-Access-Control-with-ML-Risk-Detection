@@ -72,13 +72,34 @@ def upload_file():
         return jsonify({'message': 'Encryption password is required'}), 400
 
     filename = secure_filename(file.filename)
+
+    # Read file data to compute hash and check versions
+    try:
+        file_data = file.read()
+        file_size = len(file_data)
+    except Exception as e:
+        return jsonify({'message': f'Failed to read file: {str(e)}'}), 400
+
+    import hashlib
+    file_hash = hashlib.sha256(file_data).hexdigest()
+
+    # Version Integrity & Duplicate Check
+    existing_file = db.get_file_by_name_and_owner(filename, username)
+    is_version_update = False
+
+    if existing_file:
+        if existing_file.get('file_hash') == file_hash:
+            return jsonify({
+                'message': 'This exact file has already been uploaded. No modifications detected.'
+            }), 400
+        else:
+            is_version_update = True
+
     file_id = str(uuid.uuid4())
     save_path = os.path.join(UPLOAD_FOLDER, f"{file_id}.enc")
 
     # Read and Encrypt
     try:
-        file_data = file.read()
-        file_size = len(file_data)
         encrypted_data, salt = encryption_service.encrypt(file_data, password)
         
         # Save to S3/MinIO
@@ -88,11 +109,26 @@ def upload_file():
     except Exception as e:
         return jsonify({'message': f'Encryption/Upload failed: {str(e)}'}), 500
 
-    # Persist to DB
-    db.create_file_record(file_id, username, filename, save_path, file_size)
+    # Persist to DB with hash
+    db.create_file_record(file_id, username, filename, save_path, file_size, file_hash=file_hash)
+
+    # Fetch user details to map to a CERT role
+    user_info = db.get_user(username) or {}
+    db_role = user_info.get('role', 'user').lower()
+    db_dept = user_info.get('department', 'General').lower()
+
+    # Map database role/department to CERT model categories
+    if db_role == 'admin':
+        mapped_role = 'ITAdmin'
+    elif db_dept == 'it':
+        mapped_role = 'SoftwareEngineer'
+    elif db_dept == 'security':
+        mapped_role = 'SecurityGuard'
+    else:
+        mapped_role = 'AdministrativeAssistant'
 
     # Centralized Feature Generation
-    features = ml_analyzer.generate_features(filename, file_size)
+    features = ml_analyzer.generate_features(filename, file_size, role=mapped_role, activity='File Copy')
 
     # Async configuration check
     use_async = os.environ.get("USE_ASYNC_ML", "").lower() == "true"
@@ -106,14 +142,14 @@ def upload_file():
             username=username,
             file_id=file_id,
             filename=filename,
-            user_role="Upload Request",
+            user_role="Version Update" if is_version_update else "Upload Request",
             ml_details={'status': 'queued'},
             status="queued"
         )
         
         # 2. Enqueue to Celery background task
         from modules.tasks import run_ml_analysis
-        task = run_ml_analysis.delay(req_id, file_id, filename, features, username)
+        task = run_ml_analysis.delay(req_id, file_id, filename, features, username, is_version_update=is_version_update)
         
         return jsonify({
             'message': 'File securely encrypted and uploaded. Risk analysis enqueued.',
@@ -125,7 +161,12 @@ def upload_file():
     else:
         # SYNCHRONOUS FALLBACK PATH
         ml_results = ml_analyzer.analyze_risk(features)
-        db.create_request(req_id, username, file_id, filename, "Upload Request", ml_results, status="pending")
+        if is_version_update:
+            ml_results['verdict'] = "Review (Modified Version)"
+            ml_results['risk_score'] = max(ml_results.get('risk_score', 0), 0.75)
+            ml_results['warnings'] = ml_results.get('warnings', []) + ["Tamper Check: File content differs from downloaded version"]
+
+        db.create_request(req_id, username, file_id, filename, "Version Update" if is_version_update else "Upload Request", ml_results, status="pending")
         audit_ledger.add_event(f"User '{username}' uploaded file: {filename} (ID: {file_id})")
         db.log_activity(username, "file_upload", f"File: {filename}")
         

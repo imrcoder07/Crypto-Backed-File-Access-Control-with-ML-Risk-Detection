@@ -1,276 +1,522 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure File Access Control</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Crypto Access Control | Secure File Gateway</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;450;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <!-- =============================================
+         STITCH DESIGN SYSTEM — Tailwind Config
+         Source: DESIGN_SYSTEM_SPEC.md v1.0.0
+         ============================================= -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary":                   "#4cd7f6",
+                        "primary-container":         "#06b6d4",
+                        "primary-fixed":             "#acedff",
+                        "primary-fixed-dim":         "#4cd7f6",
+                        "on-primary":                "#003640",
+                        "on-primary-container":      "#00424f",
+                        "on-primary-fixed":          "#001f26",
+                        "on-primary-fixed-variant":  "#004e5c",
+                        "inverse-primary":           "#00687a",
+                        "surface-tint":              "#4cd7f6",
+                        "secondary":                 "#4edea3",
+                        "secondary-container":       "#00a572",
+                        "secondary-fixed":           "#6ffbbe",
+                        "secondary-fixed-dim":       "#4edea3",
+                        "on-secondary":              "#003824",
+                        "on-secondary-container":    "#00311f",
+                        "on-secondary-fixed":        "#002113",
+                        "on-secondary-fixed-variant":"#005236",
+                        "tertiary":                  "#ffb2b7",
+                        "tertiary-container":        "#ff7f8b",
+                        "tertiary-fixed":            "#ffdadb",
+                        "tertiary-fixed-dim":        "#ffb2b7",
+                        "on-tertiary":               "#67001b",
+                        "on-tertiary-container":     "#7d0023",
+                        "on-tertiary-fixed":         "#40000d",
+                        "on-tertiary-fixed-variant": "#92002a",
+                        "error":                     "#ffb4ab",
+                        "error-container":           "#93000a",
+                        "on-error":                  "#690005",
+                        "on-error-container":        "#ffdad6",
+                        "background":                "#10141a",
+                        "surface":                   "#10141a",
+                        "surface-dim":               "#10141a",
+                        "surface-bright":            "#353940",
+                        "surface-variant":           "#31353c",
+                        "surface-container-lowest":  "#0a0e14",
+                        "surface-container-low":     "#181c22",
+                        "surface-container":         "#1c2026",
+                        "surface-container-high":    "#262a31",
+                        "surface-container-highest": "#31353c",
+                        "on-background":             "#dfe2eb",
+                        "on-surface":                "#dfe2eb",
+                        "on-surface-variant":        "#bcc9cd",
+                        "inverse-surface":           "#dfe2eb",
+                        "inverse-on-surface":        "#2d3137",
+                        "outline":                   "#869397",
+                        "outline-variant":           "#3d494c",
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg":      "0.25rem",
+                        "xl":      "0.5rem",
+                        "full":    "0.75rem",
+                    },
+                    spacing: {
+                        "unit":              "4px",
+                        "gutter":            "1rem",
+                        "container-padding": "1.5rem",
+                        "component-gap":     "0.5rem",
+                        "table-row-height":  "40px",
+                    },
+                    fontFamily: {
+                        "data-mono":   ["JetBrains Mono", "monospace"],
+                        "label-caps":  ["Inter", "sans-serif"],
+                        "headline-md": ["Inter", "sans-serif"],
+                        "body-sm":     ["Inter", "sans-serif"],
+                        "display-lg":  ["Inter", "sans-serif"],
+                    },
+                    fontSize: {
+                        "data-mono":   ["12px", { lineHeight: "1.4",  fontWeight: "450" }],
+                        "label-caps":  ["11px", { lineHeight: "1",    letterSpacing: "0.05em", fontWeight: "600" }],
+                        "headline-md": ["20px", { lineHeight: "1.4",  fontWeight: "600" }],
+                        "body-sm":     ["13px", { lineHeight: "1.5",  fontWeight: "400" }],
+                        "display-lg":  ["32px", { lineHeight: "1.2",  letterSpacing: "-0.02em", fontWeight: "700" }],
+                    }
+                }
+            }
         }
-        
+    </script>
+    <style>
+        /* =============================================
+           RESET & BASE
+           ============================================= */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         html, body {
             height: 100%;
             overflow: hidden;
             font-family: 'Inter', sans-serif;
+            background-color: #090E17;
+            color: #dfe2eb;
         }
-        
-        body { background: #090E17; color: #e5e7eb; }
-        
-        #bg-canvas { 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            z-index: -1; 
+
+        /* Material Symbols variable font settings */
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: inherit;
+            line-height: 1;
+            vertical-align: middle;
         }
-        
-        .view { 
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            display: none;
-            flex-direction: column;
+
+        /* =============================================
+           SCROLLBAR — Stitch spec
+           ============================================= */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #0a0e14; }
+        ::-webkit-scrollbar-thumb { background: #3d494c; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4cd7f6; }
+
+        /* =============================================
+           BACKGROUND CANVAS (Three.js)
+           ============================================= */
+        #bg-canvas {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; z-index: -1;
         }
-        
-        .view.active { 
-            display: flex; 
+
+        .fallback-bg {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, #0a0e14 0%, #10141a 100%);
+            z-index: -2; display: none;
         }
-        
-        .glass-card { 
-            background: rgba(13, 17, 23, 0.7); 
-            backdrop-filter: blur(16px); 
-            -webkit-backdrop-filter: blur(16px); 
-            border: 1px solid rgba(255, 255, 255, 0.08); 
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
+
+        /* Crypto grid background overlay */
+        .crypto-grid {
+            background-size: 20px 20px;
+            background-image:
+                linear-gradient(to right,  rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
         }
-        
-        .btn-primary { 
-            background: linear-gradient(135deg, #00F0FF 0%, #0080FF 100%); 
-            color: #000; 
-            font-weight: 700; 
-            padding: 10px 20px; 
-            border-radius: 6px; 
-            transition: all 0.3s ease; 
-            border: 1px solid rgba(0, 240, 255, 0.5);
-            cursor: pointer;
-            box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+
+        /* =============================================
+           SPA VIEW SYSTEM
+           ============================================= */
+        .view {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: none; flex-direction: column;
+        }
+        .view.active { display: flex; }
+
+        /* =============================================
+           GLASS PANEL — Primary card container
+           ============================================= */
+        .glass-card,
+        .glass-panel {
+            background: rgba(13, 17, 23, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        /* Modal variant */
+        .glass-modal {
+            background: rgba(22, 27, 34, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        /* =============================================
+           BUTTONS
+           ============================================= */
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background: #4cd7f6;
+            color: #003640;
+            font-weight: 700;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 0.875rem;
+            padding: 10px 20px;
+            border-radius: 0.25rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
-        
-        .btn-primary:hover { 
-            background: linear-gradient(135deg, #00ffff 0%, #0099ff 100%); 
-            transform: translateY(-1px);
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.4); 
+
+        .btn-primary:hover {
+            filter: brightness(1.1);
+            box-shadow: 0 0 15px rgba(76, 215, 246, 0.3);
         }
-        
+
+        .btn-primary:active { transform: scale(0.98); }
+
         .btn-primary:disabled {
-            background: #1f2937;
-            color: #9ca3af;
-            border: 1px solid #374151;
+            background: #1c2026;
+            color: #869397;
+            border: 1px solid #3d494c;
             box-shadow: none;
             transform: none;
             cursor: not-allowed;
+            filter: none;
         }
-        
-        .input-field { 
-            width: 100%; 
-            padding: 10px 14px; 
-            background: rgba(0, 0, 0, 0.2); 
-            border: 1px solid rgba(255, 255, 255, 0.1); 
-            color: #e5e7eb; 
-            border-radius: 6px; 
-            outline: none; 
+
+        /* =============================================
+           INPUTS
+           ============================================= */
+        .input-field {
+            width: 100%;
+            padding: 10px 14px;
+            background: #0a0e14;
+            border: 1px solid rgba(61, 73, 76, 0.6);
+            color: #dfe2eb;
+            border-radius: 0.25rem;
+            outline: none;
             transition: border-color 0.2s, box-shadow 0.2s;
-            font-family: 'Fira Code', monospace;
-            font-size: 0.875rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 450;
         }
-        
-        .input-field:focus { 
-            border-color: #00F0FF;
-            box-shadow: 0 0 0 2px rgba(0, 240, 255, 0.1);
+
+        .input-field:focus {
+            border-color: #4cd7f6;
+            box-shadow: 0 0 0 1px rgba(76, 215, 246, 0.3), 0 0 8px rgba(76, 215, 246, 0.1);
         }
-        
-        .sidebar-link { 
-            display: flex; 
-            align-items: center; 
-            padding: 12px 16px; 
-            color: #d1d5db; 
-            border-radius: 8px; 
-            transition: background-color 0.2s; 
+
+        .input-field::placeholder { color: rgba(188, 201, 205, 0.4); }
+
+        /* =============================================
+           SIDEBAR & NAVIGATION
+           ============================================= */
+        .dashboard-sidebar {
+            width: 256px;
+            flex-shrink: 0;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            color: #bcc9cd;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 450;
+            text-transform: uppercase;
+            border-radius: 0;
+            transition: background-color 0.15s, color 0.15s;
             text-decoration: none;
             cursor: pointer;
         }
-        
-        .sidebar-link:hover { 
-            background: #374151; 
+
+        .sidebar-link:hover { background: #262a31; color: #dfe2eb; }
+
+        .sidebar-link.active {
+            background: rgba(76, 215, 246, 0.05);
+            color: #4cd7f6;
+            font-weight: 700;
+            border-right: 2px solid #4cd7f6;
         }
-        
-        .sidebar-link.active { 
-            background: rgba(0, 240, 255, 0.1); 
-            color: #00F0FF; 
-            border-right: 3px solid #00F0FF; 
+
+        /* =============================================
+           DASHBOARD LAYOUT
+           ============================================= */
+        .dashboard-container { display: flex; height: 100vh; width: 100%; }
+
+        .dashboard-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-size: 20px 20px;
+            background-image:
+                linear-gradient(to right,  rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
         }
-        
-        .dashboard-page { 
-            display: none; 
+
+        .dashboard-main { flex: 1; overflow-y: auto; padding: 1rem; }
+
+        .dashboard-page {
+            display: none;
             flex: 1;
             overflow-y: auto;
-            animation: fadeIn 0.3s ease-in-out;
+            animation: fadeIn 0.2s ease-in-out;
         }
-        
-        .dashboard-page.active { 
-            display: block; 
-        }
-        
-        @keyframes fadeIn { 
-            from { 
-                opacity: 0; 
-                transform: translateY(10px); 
-            } 
-            to { 
-                opacity: 1; 
-                transform: translateY(0); 
-            } 
-        }
-        
-        .fallback-bg { 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-            z-index: -2;
-            display: none;
+        .dashboard-page.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
+        /* =============================================
+           FILE LIST CONTAINER
+           ============================================= */
+        .file-list-container { max-height: 420px; overflow-y: auto; }
+
+        /* =============================================
+           TABLE — Stitch spec
+           ============================================= */
+        .table-container { overflow-x: auto; }
+
+        .cyber-table { width: 100%; border-collapse: collapse; }
+
+        .cyber-table th {
+            background: rgba(38, 42, 49, 0.5);
+            text-align: left;
+            padding: 12px 16px;
+            color: #869397;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 11px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .cyber-table td {
+            padding: 0 16px;
+            height: 40px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 450;
+            color: #dfe2eb;
+            transition: background 0.15s;
+        }
+
+        .cyber-table tbody tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+        /* =============================================
+           STATUS BADGES — Stitch spec
+           ============================================= */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 0.25rem;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            border-width: 1px;
+            border-style: solid;
+        }
+
+        .status-approved {
+            background: rgba(78, 222, 163, 0.1);
+            color: #4edea3;
+            border-color: rgba(78, 222, 163, 0.2);
+        }
+
+        .status-pending {
+            background: rgba(6, 182, 212, 0.1);
+            color: #06b6d4;
+            border-color: rgba(6, 182, 212, 0.2);
+        }
+
+        .status-rejected {
+            background: rgba(255, 180, 171, 0.1);
+            color: #ffb4ab;
+            border-color: rgba(255, 180, 171, 0.2);
+        }
+
+        /* =============================================
+           STATUS INDICATORS (dot)
+           ============================================= */
         .status-indicator {
             display: inline-block;
-            width: 8px;
-            height: 8px;
+            width: 8px; height: 8px;
             border-radius: 50%;
-            margin-right: 8px;
-        }
-        
-        .status-online { 
-            background: #10b981; 
-        }
-        
-        .status-offline { 
-            background: #ef4444; 
-        }
-        
-        .status-loading { 
-            background: #f59e0b; 
-            animation: pulse 1.5s infinite; 
-        }
-        
-        @keyframes pulse { 
-            0% { 
-                transform: scale(1); 
-            } 
-            50% { 
-                transform: scale(1.05); 
-            } 
-            100% { 
-                transform: scale(1); 
-            } 
-        }
-        
-        .blockchain-pulse { 
-            animation: pulse 2s infinite; 
         }
 
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        
-        .status-approved { 
-            background: #dcfce7; 
-            color: #166534; 
-        }
-        
-        .status-pending { 
-            background: #fef3c7; 
-            color: #92400e; 
-        }
-        
-        .status-rejected { 
-            background: #fee2e2; 
-            color: #991b1b; 
+        .status-online  { background: #4edea3; }
+        .status-offline { background: #ffb4ab; }
+        .status-loading { background: #fbbf24; animation: statusPulse 1.5s ease infinite; }
+
+        @keyframes statusPulse {
+            0%, 100% { transform: scale(1);    opacity: 1; }
+            50%       { transform: scale(1.15); opacity: 0.8; }
         }
 
+        .blockchain-pulse { animation: statusPulse 2s ease infinite; }
+
+        /* =============================================
+           CONFIDENCE / PROGRESS BARS — Stitch spec
+           ============================================= */
         .confidence-bar {
             height: 6px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
             border-radius: 3px;
             overflow: hidden;
             margin: 4px 0;
         }
-        
+
         .confidence-level {
             height: 100%;
-            background: linear-gradient(90deg, #10b981, #3b82f6);
+            background: linear-gradient(90deg, #4edea3, #4cd7f6);
             border-radius: 3px;
             transition: width 0.5s ease;
         }
 
+        /* =============================================
+           LOADING SPINNER — Stitch spec
+           ============================================= */
         .loading-spinner {
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #4f46e5;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
             display: inline-block;
-        }
-        
-        @keyframes spin {
-            0% { 
-                transform: rotate(0deg); 
-            }
-            100% { 
-                transform: rotate(360deg); 
-            }
+            width: 20px; height: 20px;
+            border: 2px solid rgba(76, 215, 246, 0.2);
+            border-top-color: #4cd7f6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
         }
 
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin: 3rem 0;
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
         }
-        
-        .feature-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 1rem;
-            padding: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: transform 0.3s ease;
+
+        /* =============================================
+           MESSAGE AREAS — Stitch spec
+           ============================================= */
+        .message-area {
+            padding: 10px 16px;
+            border-radius: 0.25rem;
+            margin-bottom: 12px;
+            text-align: center;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8125rem;
+            transition: opacity 0.3s;
+            border-width: 1px;
+            border-style: solid;
+            border-color: transparent;
         }
-        
-        .feature-card:hover {
-            transform: translateY(-5px);
+
+        .message-success {
+            background: rgba(78, 222, 163, 0.1);
+            border-color: rgba(78, 222, 163, 0.3);
+            color: #4edea3;
         }
-        
-        /* Landing page specific styles */
+
+        .message-error {
+            background: rgba(255, 180, 171, 0.1);
+            border-color: rgba(255, 180, 171, 0.3);
+            color: #ffb4ab;
+        }
+
+        .message-info {
+            background: rgba(76, 215, 246, 0.1);
+            border-color: rgba(76, 215, 246, 0.3);
+            color: #4cd7f6;
+        }
+
+        .message-warning {
+            background: rgba(251, 191, 36, 0.1);
+            border-color: rgba(251, 191, 36, 0.3);
+            color: #fbbf24;
+        }
+
+        /* =============================================
+           TOAST NOTIFICATIONS — Stitch spec
+           ============================================= */
+        .toast-container {
+            position: fixed;
+            bottom: 24px; right: 24px;
+            display: flex; flex-direction: column; gap: 10px;
+            z-index: 9999;
+        }
+
+        .toast {
+            background: rgba(13, 17, 23, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: #dfe2eb;
+            padding: 14px 18px;
+            border-radius: 0.25rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            display: flex; align-items: flex-start; gap: 10px;
+            min-width: 280px; max-width: 400px;
+            animation: toastIn 0.2s ease forwards;
+            font-size: 0.8125rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .toast.success { border-left: 4px solid #4edea3; }
+        .toast.error   { border-left: 4px solid #ffb4ab; }
+        .toast.info    { border-left: 4px solid #4cd7f6; }
+        .toast.fade-out { animation: toastOut 0.2s ease forwards; }
+
+        @keyframes toastIn  {
+            from { transform: translateX(100%); opacity: 0; }
+            to   { transform: translateX(0);    opacity: 1; }
+        }
+        @keyframes toastOut {
+            from { transform: translateX(0);    opacity: 1; }
+            to   { transform: translateX(100%); opacity: 0; }
+        }
+
+        /* =============================================
+           LANDING PAGE
+           ============================================= */
         #landing-view {
             min-height: 100vh;
             display: flex;
@@ -278,166 +524,68 @@
             justify-content: center;
             overflow: hidden;
         }
-        
+
         .landing-content {
-            max-width: 1200px;
+            max-width: 1100px;
             width: 100%;
             padding: 2rem;
             text-align: center;
-        }
-        
-        /* Dashboard specific styles */
-        .dashboard-container {
-            display: flex;
-            height: 100vh;
-            width: 100%;
-        }
-        
-        .dashboard-sidebar {
-            width: 250px;
-            flex-shrink: 0;
-            overflow-y: auto;
-        }
-        
-        .dashboard-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        
-        .dashboard-main {
-            flex: 1;
-            overflow-y: auto;
-            padding: 2rem;
-        }
-        
-        /* File list styles */
-        .file-list-container {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        
-        /* Table responsive styles */
-        .table-container {
-            overflow-x: auto;
-        }
-        
-        /* Message area styles */
-        .message-area {
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            text-align: center;
-            transition: opacity 0.3s;
-        }
-        
-        .message-success {
-            background: rgba(34, 197, 94, 0.2);
-            border: 1px solid rgba(34, 197, 94, 0.5);
-            color: #10b981;
-        }
-        
-        .message-error {
-            background: rgba(239, 68, 68, 0.2);
-            border: 1px solid rgba(239, 68, 68, 0.5);
-            color: #ef4444;
-        }
-        
-        .message-info {
-            background: rgba(59, 130, 246, 0.2);
-            border: 1px solid rgba(59, 130, 246, 0.5);
-            color: #3b82f6;
-        }
-        
-        .message-warning {
-            background: rgba(245, 158, 11, 0.2);
-            border: 1px solid rgba(245, 158, 11, 0.5);
-            color: #f59e0b;
         }
 
-        /* Hide scrollbar for Chrome, Safari and Opera */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2.5rem 0;
         }
-        
-        /* Hide scrollbar for IE, Edge and Firefox */
-        .no-scrollbar {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
+
+        .feature-card {
+            background: rgba(13, 17, 23, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            transition: transform 0.2s ease, border-color 0.2s ease;
         }
-    
-        .font-mono { font-family: 'Fira Code', monospace; }
-        .text-neon-cyan { color: #00F0FF; }
-        .border-neon-cyan { border-color: #00F0FF; }
-        
-        .toast-container {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            z-index: 9999;
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(76, 215, 246, 0.2);
         }
-        .toast {
-            background: rgba(13, 17, 23, 0.9);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 16px 20px;
-            border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            animation: slideIn 0.3s ease forwards;
-            font-size: 0.875rem;
+
+        /* =============================================
+           UTILITY CLASSES
+           ============================================= */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Legacy aliases — kept for backward compat */
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .text-neon-cyan { color: #4cd7f6; }
+        .border-neon-cyan { border-color: #4cd7f6; }
+
+        /* Focus ring — Stitch accessibility spec */
+        :focus-visible {
+            outline: 2px solid #4cd7f6;
+            outline-offset: 2px;
         }
-        .toast.success { border-left: 4px solid #00FF66; }
-        .toast.error { border-left: 4px solid #FF2A55; }
-        .toast.info { border-left: 4px solid #00F0FF; }
-        .toast.fade-out { animation: slideOut 0.3s ease forwards; }
-        
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+        :focus:not(:focus-visible) { outline: none; }
+
+        /* Skeleton shimmer */
+        .skeleton {
+            background: linear-gradient(90deg, #1c2026 25%, #262a31 50%, #1c2026 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 0.25rem;
         }
-        @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
+        @keyframes shimmer {
+            from { background-position: 200% 0; }
+            to   { background-position: -200% 0; }
         }
-        
-        /* Modernized table styling */
-        .cyber-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            font-size: 0.875rem;
-        }
-        .cyber-table th {
-            background: rgba(255, 255, 255, 0.03);
-            text-align: left;
-            padding: 12px 16px;
-            color: #9ca3af;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 0.75rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .cyber-table td {
-            padding: 12px 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            transition: background 0.2s;
-        }
-        .cyber-table tbody tr:hover td {
-            background: rgba(255, 255, 255, 0.02);
-        }
-    
     </style>
 </head>
-<body class="bg-gray-900 text-gray-200">
+<body class="bg-background text-on-surface font-body-sm">
+
 
     <div class="fallback-bg"></div>
     <canvas id="bg-canvas"></canvas>
@@ -552,24 +700,71 @@
     <!-- USER DASHBOARD VIEW -->
     <div id="user-dashboard-view" class="view">
         <div class="dashboard-container">
-            <aside class="dashboard-sidebar glass-card p-6 flex flex-col">
-                <h1 class="text-2xl font-bold text-indigo-400 mb-8">👤 User Panel</h1>
-                <nav class="flex flex-col space-y-2 flex-grow">
-                    <a href="#" class="sidebar-link active" onclick="showUserPage('user-files')">📁 File Management</a>
-                    <a href="#" class="sidebar-link" onclick="showUserPage('user-requests')">⏳ My Requests</a>
-                    <a href="#" class="sidebar-link" onclick="showUserPage('user-activity')">📊 My Activity</a>
-                    <a href="#" class="sidebar-link" onclick="showUserPage('user-profile')">⚙️ Profile & Settings</a>
+            <aside class="dashboard-sidebar flex flex-col h-screen fixed left-0 top-0 bg-surface-container-low border-r border-white/10 h-full w-64 z-50">
+                <div class="p-6 flex flex-col gap-1 border-b border-white/5">
+                    <div class="font-headline-md text-headline-md text-primary tracking-tight mb-1">Crypto Access Control</div>
+                    <div class="font-data-mono text-data-mono text-on-surface-variant opacity-60 uppercase tracking-widest text-[10px]">Ops Center v2.4</div>
+                </div>
+                <nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+                    <a href="#" class="sidebar-link active" onclick="showUserPage('user-files')">
+                        <span class="material-symbols-outlined mr-3">folder_open</span>
+                        <span class="font-data-mono text-data-mono">File Explorer</span>
+                    </a>
+                    <a href="#" class="sidebar-link" onclick="showUserPage('user-requests')">
+                        <span class="material-symbols-outlined mr-3">history_edu</span>
+                        <span class="font-data-mono text-data-mono">Access Logs</span>
+                    </a>
+                    <a href="#" class="sidebar-link" onclick="showUserPage('user-activity')">
+                        <span class="material-symbols-outlined mr-3">fact_check</span>
+                        <span class="font-data-mono text-data-mono">Audit Trail</span>
+                    </a>
                 </nav>
-                <div class="border-t border-gray-700 pt-4 mt-4">
-                    <div id="user-profile-widget" class="text-center mb-2">
+                <div class="p-4 mt-auto border-t border-white/5">
+                    <div id="user-profile-widget" class="text-center mb-4 font-data-mono text-xs text-on-surface-variant">
                         <p class="font-bold text-white">Loading...</p>
                         <p class="text-xs text-gray-500">User</p>
                     </div>
-                    <a href="#" onclick="logout()" class="block text-center text-sm text-gray-500 hover:underline">🚪 Logout</a>
+                    <div class="space-y-1">
+                        <a href="#" class="sidebar-link" onclick="showUserPage('user-profile')">
+                            <span class="material-symbols-outlined mr-3">settings</span>
+                            <span class="font-data-mono text-data-mono">Settings</span>
+                        </a>
+                        <a href="#" onclick="logout()" class="flex items-center justify-center gap-2 px-3 py-2 text-on-surface-variant hover:text-primary transition-all font-data-mono text-xs uppercase">
+                            <span class="material-symbols-outlined">logout</span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
                 </div>
             </aside>
-            <div class="dashboard-content">
-                <div class="dashboard-main">
+            <div class="dashboard-content ml-64 flex flex-col min-h-screen">
+                <!-- Top AppBar -->
+                <header class="flex justify-between items-center w-full h-14 px-gutter bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-b border-outline-variant/30 z-40 sticky top-0">
+                    <div class="flex items-center bg-surface-container-lowest border border-outline-variant/30 px-3 py-1 cyan-glow">
+                        <span class="material-symbols-outlined text-on-surface-variant text-sm mr-2">search</span>
+                        <input class="bg-transparent border-none focus:ring-0 text-data-mono font-data-mono text-xs w-64 placeholder-outline-variant outline-none" placeholder="Search Encrypted Volumes..." type="text"/>
+                    </div>
+                    <div class="flex items-center space-x-6">
+                        <div class="flex space-x-4">
+                            <button class="text-on-surface-variant hover:text-primary transition-all duration-200">
+                                <span class="material-symbols-outlined">notifications</span>
+                            </button>
+                            <button class="text-on-surface-variant hover:text-primary transition-all duration-200">
+                                <span class="material-symbols-outlined">shield</span>
+                            </button>
+                            <button class="text-on-surface-variant hover:text-primary transition-all duration-200">
+                                <span class="material-symbols-outlined">apps</span>
+                            </button>
+                        </div>
+                        <div class="flex items-center space-x-3 pl-6 border-l border-outline-variant/30">
+                            <div class="text-right">
+                                <p class="header-username font-label-caps text-label-caps text-on-surface leading-none">USER_ROOT</p>
+                                <p class="font-data-mono text-[10px] text-primary opacity-80 uppercase tracking-tighter">Level 2 Clearance</p>
+                            </div>
+                            <img class="w-8 h-8 rounded-full border border-primary/40 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCV_rNsnfyYfRDLhC-Q1LnnwGLad0eOjjRRTWKnehQExSdve7wYnjCMeK90hl0WQKF0ysBdZ0D0ltXt5FQUbtgdnz2feAp0L6802j5iGpsTACijn8qHSP_QcXWA6JJeEIjE7gfAaaR1LEacu5ZdqayZIrHgA1wtj92449bquBGO2lJ2sZ5xdB6GvJTRqivr3wmxq9T7JXaVDwIctW5QYTFZrB34GgIZ-TRCLjc9DlXLUQAW8v3PdAAxXQ"/>
+                        </div>
+                    </div>
+                </header>
+                <div class="dashboard-main flex-1 p-gutter space-y-gutter">
                     <!-- File Management Page -->
                     <div id="user-files-page" class="dashboard-page active">
                         <h2 class="text-3xl font-bold text-white mb-6">📁 File Management</h2>
@@ -662,26 +857,79 @@
     <!-- ADMIN DASHBOARD VIEW -->
     <div id="admin-dashboard-view" class="view">
         <div class="dashboard-container">
-            <aside class="dashboard-sidebar glass-card p-6 flex flex-col">
-                <h1 class="text-2xl font-bold text-red-500 mb-8">🛡️ Admin Panel</h1>
-                <nav class="flex flex-col space-y-2 flex-grow">
-                    <a href="#" class="sidebar-link active" onclick="showAdminPage('admin-stats')">📊 System Stats</a>
-                    <a href="#" class="sidebar-link" onclick="showAdminPage('admin-requests')">⏳ Pending Requests</a>
-                    <a href="#" class="sidebar-link" onclick="showAdminPage('admin-approved')">✅ Approved Files</a>
-                    <a href="#" class="sidebar-link" onclick="showAdminPage('admin-users')">👥 User Management</a>
-                    <a href="#" class="sidebar-link" onclick="showAdminPage('admin-blockchain')">⛓️ Blockchain Log</a>
-                    <a href="#" class="sidebar-link" onclick="showAdminPage('admin-profile')">⚙️ Profile & Settings</a>
+            <aside class="dashboard-sidebar flex flex-col h-screen fixed left-0 top-0 bg-surface-container-low border-r border-white/10 h-full w-64 z-50">
+                <div class="p-6 flex flex-col gap-1 border-b border-white/5">
+                    <div class="font-headline-md text-headline-md text-primary tracking-tight mb-1">Crypto Access Control</div>
+                    <div class="font-data-mono text-data-mono text-on-surface-variant opacity-60 uppercase tracking-widest text-[10px]">Ops Center v2.4</div>
+                </div>
+                <nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+                    <a href="#" class="sidebar-link active" onclick="showAdminPage('admin-stats')">
+                        <span class="material-symbols-outlined mr-3">dashboard</span>
+                        <span class="font-data-mono text-data-mono">Overview</span>
+                    </a>
+                    <a href="#" class="sidebar-link" onclick="showAdminPage('admin-requests')">
+                        <span class="material-symbols-outlined mr-3">history_edu</span>
+                        <span class="font-data-mono text-data-mono">Requests</span>
+                    </a>
+                    <a href="#" class="sidebar-link" onclick="showAdminPage('admin-approved')">
+                        <span class="material-symbols-outlined mr-3">folder_open</span>
+                        <span class="font-data-mono text-data-mono">Files</span>
+                    </a>
+                    <a href="#" class="sidebar-link" onclick="showAdminPage('admin-users')">
+                        <span class="material-symbols-outlined mr-3">lock_person</span>
+                        <span class="font-data-mono text-data-mono">Users</span>
+                    </a>
+                    <a href="#" class="sidebar-link" onclick="showAdminPage('admin-blockchain')">
+                        <span class="material-symbols-outlined mr-3">fact_check</span>
+                        <span class="font-data-mono text-data-mono">Audit Log</span>
+                    </a>
                 </nav>
-                <div class="border-t border-gray-700 pt-4 mt-4">
-                    <div id="admin-profile-widget" class="text-center mb-2">
+                <div class="p-4 mt-auto border-t border-white/5">
+                    <div id="admin-profile-widget" class="text-center mb-4 font-data-mono text-xs text-on-surface-variant">
                         <p class="font-bold text-white">Loading...</p>
                         <p class="text-xs text-red-400">Administrator</p>
                     </div>
-                    <a href="#" onclick="logout()" class="block text-center text-sm text-gray-500 hover:underline">🚪 Logout</a>
+                    <div class="space-y-1">
+                        <a href="#" class="sidebar-link" onclick="showAdminPage('admin-profile')">
+                            <span class="material-symbols-outlined mr-3">settings</span>
+                            <span class="font-data-mono text-data-mono">Settings</span>
+                        </a>
+                        <a href="#" onclick="logout()" class="flex items-center justify-center gap-2 px-3 py-2 text-on-surface-variant hover:text-primary transition-all font-data-mono text-xs uppercase">
+                            <span class="material-symbols-outlined">logout</span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
                 </div>
             </aside>
-            <div class="dashboard-content">
-                <div class="dashboard-main">
+            <div class="dashboard-content ml-64 flex flex-col min-h-screen">
+                <!-- Top AppBar -->
+                <header class="flex justify-between items-center w-full h-14 px-gutter bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-b border-outline-variant/30 z-40 sticky top-0">
+                    <div class="flex items-center bg-surface-container-lowest border border-outline-variant/30 px-3 py-1 cyan-glow">
+                        <span class="material-symbols-outlined text-on-surface-variant text-sm mr-2">search</span>
+                        <input class="bg-transparent border-none focus:ring-0 text-data-mono font-data-mono text-xs w-64 placeholder-outline-variant outline-none" placeholder="QUERY BLOCKS OR ENTITIES..." type="text"/>
+                    </div>
+                    <div class="flex items-center space-x-6">
+                        <div class="flex space-x-4">
+                            <button class="text-on-surface-variant hover:text-primary transition-all duration-200">
+                                <span class="material-symbols-outlined">notifications</span>
+                            </button>
+                            <button class="text-on-surface-variant hover:text-primary transition-all duration-200">
+                                <span class="material-symbols-outlined">shield</span>
+                            </button>
+                            <button class="text-on-surface-variant hover:text-primary transition-all duration-200">
+                                <span class="material-symbols-outlined">apps</span>
+                            </button>
+                        </div>
+                        <div class="flex items-center space-x-3 pl-6 border-l border-outline-variant/30">
+                            <div class="text-right">
+                                <p class="header-username font-label-caps text-label-caps text-on-surface leading-none">ADMIN_ROOT</p>
+                                <p class="font-data-mono text-[10px] text-primary opacity-80 uppercase tracking-tighter">Level 4 Clearance</p>
+                            </div>
+                            <img class="w-8 h-8 rounded border border-primary/40 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCV_rNsnfyYfRDLhC-Q1LnnwGLad0eOjjRRTWKnehQExSdve7wYnjCMeK90hl0WQKF0ysBdZ0D0ltXt5FQUbtgdnz2feAp0L6802j5iGpsTACijn8qHSP_QcXWA6JJeEIjE7gfAaaR1LEacu5ZdqayZIrHgA1wtj92449bquBGO2lJ2sZ5xdB6GvJTRqivr3wmxq9T7JXaVDwIctW5QYTFZrB34GgIZ-TRCLjc9DlXLUQAW8v3PdAAxXQ"/>
+                        </div>
+                    </div>
+                </header>
+                <div class="dashboard-main flex-1 p-gutter space-y-gutter">
                     <!-- System Stats Page -->
                     <div id="admin-stats-page" class="dashboard-page active">
                         <h2 class="text-3xl font-bold text-white mb-6">📊 Real-Time System Statistics</h2>
@@ -1519,6 +1767,7 @@
             
             document.getElementById('user-profile-widget').innerHTML = `<p class="font-bold text-white">${SecurityUtils.sanitize(username)}</p><p class="text-xs text-gray-500">User</p>`;
             document.getElementById('admin-profile-widget').innerHTML = `<p class="font-bold text-white">${SecurityUtils.sanitize(username)}</p><p class="text-xs text-red-400">Administrator</p>`;
+            document.querySelectorAll('.header-username').forEach(el => el.textContent = SecurityUtils.sanitize(username));
             
             if (role === 'Admin') { 
                 showView('admin-dashboard-view'); 

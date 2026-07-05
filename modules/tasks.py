@@ -7,7 +7,7 @@ from modules import db
 logger = logging.getLogger(__name__)
 
 @celery_instance.task(name="tasks.run_ml_analysis", bind=True, max_retries=3)
-def run_ml_analysis(self, req_id: str, file_id: str, filename: str, features: dict, username: str):
+def run_ml_analysis(self, req_id: str, file_id: str, filename: str, features: dict, username: str, is_version_update: bool = False):
     """Asynchronous background task to run the machine learning models and update request records."""
     logger.info(f"Background Job: Starting ML analysis for request {req_id} (File ID: {file_id})...")
     
@@ -25,6 +25,12 @@ def run_ml_analysis(self, req_id: str, file_id: str, filename: str, features: di
         # 2. Run Machine Learning Risk Models
         logger.info(f"Background Job: Running risk inference models for {filename}...")
         ml_results = ml_analyzer.analyze_risk(features)
+        
+        # If this is a version update, inject warning and update final verdict
+        if is_version_update:
+            ml_results['verdict'] = "Review (Modified Version)"
+            ml_results['risk_score'] = max(ml_results.get('risk_score', 0), 0.75)
+            ml_results['warnings'] = ml_results.get('warnings', []) + ["Tamper Check: File content differs from downloaded version"]
         
         # 3. Update Database Request Status to 'pending' and record ML details
         logger.info(f"Background Job: Updating PostgreSQL database record...")

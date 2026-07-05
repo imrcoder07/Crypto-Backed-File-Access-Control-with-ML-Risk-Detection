@@ -73,6 +73,7 @@ This system solves all three simultaneously through an integrated pipeline.
 - AES-256 server-side file encryption via the `cryptography` library
 - Secure HTTPS-only sessions with `SameSite=Lax` CSRF protection
 - ProxyFix middleware for secure Render/reverse-proxy operation
+- SHA-256 file fingerprinting for off-site file tampering/modification detection
 
 ### 🤖 AI-Powered Risk Detection
 - **Ensemble ML** using Random Forest + SVM + Isolation Forest
@@ -562,6 +563,8 @@ The integration test suite covers:
 - ✅ Blockchain audit log integrity
 - ✅ Rate limiting validation
 - ✅ RBAC enforcement
+- ✅ Prevents duplicate uploads (SHA-256 fingerprint check)
+- ✅ Identifies/flags off-site file tampering on re-upload
 
 ---
 

@@ -147,12 +147,12 @@ def test_celery_task_execution(mock_ledger, logged_in_client):
     )
     
     features = {
-        'file_size': 100,
-        'name_length': len("task_file.txt"),
-        'is_executable': 0,
-        'has_special_chars': 0,
-        'upload_hour': 12,
-        'user_trust_score': 0.85
+        'hour_of_day': 12,
+        'day_of_week': 2,
+        'is_weekend': 0,
+        'avg_actions_per_day': 15.0,
+        'activity': 'File Copy',
+        'role': 'SoftwareEngineer'
     }
     
     # Run the Celery task synchronously in the current thread by calling .run() or calling task directly
@@ -164,3 +164,61 @@ def test_celery_task_execution(mock_ledger, logged_in_client):
     assert req['status'] == 'pending'
     assert req['ml_verdict'] is not None
     assert mock_ledger.called
+
+
+@patch('modules.storage_utils.storage_service.upload_file')
+def test_upload_duplicate_file(mock_upload, logged_in_client):
+    client, username = logged_in_client
+    mock_upload.return_value = "fake_s3_path"
+    os.environ['USE_ASYNC_ML'] = 'false'
+    
+    import io
+    # First upload
+    data1 = {
+        'file': (io.BytesIO(b"duplicate test file content"), 'dup_test.txt'),
+        'password': 'encryption_password'
+    }
+    response1 = client.post('/upload', data=data1, content_type='multipart/form-data')
+    assert response1.status_code == 200
+    
+    # Second upload with same name and same content
+    data2 = {
+        'file': (io.BytesIO(b"duplicate test file content"), 'dup_test.txt'),
+        'password': 'encryption_password'
+    }
+    response2 = client.post('/upload', data=data2, content_type='multipart/form-data')
+    assert response2.status_code == 400
+    assert "exact file has already been uploaded" in response2.get_json()['message']
+
+
+@patch('modules.storage_utils.storage_service.upload_file')
+def test_upload_version_update_file(mock_upload, logged_in_client):
+    client, username = logged_in_client
+    mock_upload.return_value = "fake_s3_path"
+    os.environ['USE_ASYNC_ML'] = 'false'
+    
+    import io
+    # First upload
+    data1 = {
+        'file': (io.BytesIO(b"original test file content"), 'version_test.txt'),
+        'password': 'encryption_password'
+    }
+    response1 = client.post('/upload', data=data1, content_type='multipart/form-data')
+    assert response1.status_code == 200
+    
+    # Second upload with same name but different content
+    data2 = {
+        'file': (io.BytesIO(b"modified test file content"), 'version_test.txt'),
+        'password': 'encryption_password'
+    }
+    response2 = client.post('/upload', data=data2, content_type='multipart/form-data')
+    assert response2.status_code == 200
+    
+    res_data2 = response2.get_json()
+    req = db.get_request(res_data2['request_id'])
+    assert req is not None
+    assert req['user_role'] == 'Version Update'
+    assert req['ml_verdict'] == 'Review (Modified Version)'
+    assert 'warnings' in req['ml_details']
+    assert any("Tamper Check" in w for w in req['ml_details']['warnings'])
+

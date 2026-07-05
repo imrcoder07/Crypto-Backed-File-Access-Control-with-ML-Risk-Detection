@@ -42,9 +42,9 @@ class MLRiskAnalyzer:
                 with open(MODEL_HASHES_PATH, 'r') as f:
                     return json.load(f)
             except (json.JSONDecodeError, OSError) as e:
-                print(f"⚠️  Could not read model_hashes.json: {e}")
-        print(
-            "⚠️  MLRiskAnalyzer: model_hashes.json not found. "
+                logger.warning(f"Could not read model_hashes.json: {e}")
+        logger.warning(
+            "MLRiskAnalyzer: model_hashes.json not found. "
             "Run 'python Crypto-models/generate_model_hashes.py' "
             "to enable model integrity verification."
         )
@@ -65,10 +65,10 @@ class MLRiskAnalyzer:
 
         if not expected_hash:
             msg = (
-                f"⚠️  No integrity hash registered for '{model_name}'. "
+                f"No integrity hash registered for '{model_name}'. "
                 "Run 'python Crypto-models/generate_model_hashes.py' to enable verification."
             )
-            print(msg)
+            logger.warning(msg)
             self.security_alerts.append({
                 'timestamp': str(datetime.datetime.now()),
                 'level': 'warning',
@@ -79,10 +79,10 @@ class MLRiskAnalyzer:
 
         if actual_hash != expected_hash:
             msg = (
-                f"🚨 SECURITY ALERT: Hash mismatch for '{model_name}'! "
-                f"Expected {expected_hash[:16]}…, got {actual_hash[:16]}…"
+                f"SECURITY ALERT: Hash mismatch for '{model_name}'! "
+                f"Expected {expected_hash[:16]}..., got {actual_hash[:16]}..."
             )
-            print(msg)
+            logger.error(msg)
             self.security_alerts.append({
                 'timestamp': str(datetime.datetime.now()),
                 'level': 'critical',
@@ -90,7 +90,7 @@ class MLRiskAnalyzer:
             })
             raise ValueError(msg)
 
-        print(f"   ✅ Integrity verified: {model_name}")
+        logger.info(f"Integrity verified: {model_name}")
         return pickle.loads(file_data)
     
     def load_models(self):
@@ -111,28 +111,30 @@ class MLRiskAnalyzer:
                 'isolation_forest_pipeline.pkl'
             )
             self.models_loaded = True
-            print("✅ All ML models loaded successfully via secure loader.")
+            logger.info("All ML models loaded successfully via secure loader.")
         except Exception as e:
             self.models_loaded = False
-            msg = f"❌ Failed to load ML models securely: {e}"
-            print(msg)
+            msg = f"Failed to load ML models securely: {e}"
+            logger.error(msg)
             self.security_alerts.append({
                 'timestamp': str(datetime.datetime.now()),
                 'level': 'critical',
                 'message': msg
             })
 
-    def generate_features(self, filename: str, file_size: int, user_trust_score: float = 0.85) -> dict:
+    def generate_features(self, filename: str, file_size: int, role: str = 'SoftwareEngineer', activity: str = 'File Copy', avg_actions_per_day: float = 15.0) -> dict:
         """Centralized helper to generate standardized ML feature vectors.
         Serves as the single source of truth for both sync and async paths.
         """
+        now = datetime.datetime.now()
+        day_of_week = now.weekday()
         return {
-            'file_size': file_size,
-            'name_length': len(filename),
-            'is_executable': 1 if filename.lower().endswith(('.exe', '.dll', '.bat', '.sh', '.bin')) else 0,
-            'has_special_chars': 1 if not filename.replace('.', '').replace('-', '').replace('_', '').isalnum() else 0,
-            'upload_hour': datetime.datetime.now().hour,
-            'user_trust_score': user_trust_score
+            'hour_of_day': now.hour,
+            'day_of_week': day_of_week,
+            'is_weekend': 1 if day_of_week >= 5 else 0,
+            'avg_actions_per_day': avg_actions_per_day,
+            'activity': activity,
+            'role': role
         }
 
     def analyze_risk(self, request_features):
@@ -160,7 +162,13 @@ class MLRiskAnalyzer:
             df = pd.DataFrame([request_features])
 
             rf_pred  = self.rf_pipeline.predict_proba(df)[0][1]
-            svm_pred = self.svm_pipeline.predict_proba(df)[0][1]
+            
+            # LinearSVC has decision_function instead of predict_proba
+            import math
+            svm_decision = self.svm_pipeline.decision_function(df)[0]
+            # Convert decision score to a probability-like value using Sigmoid function
+            svm_pred = 1.0 / (1.0 + math.exp(-svm_decision))
+            
             # IsolationForest returns 1 (inlier) or -1 (outlier)
             iso_pred = self.iso_pipeline.predict(df)[0]
 
@@ -174,8 +182,8 @@ class MLRiskAnalyzer:
             is_risky = ensemble_risk > 0.75
 
             return {
-                'risk_score': round(ensemble_risk, 2),
-                'is_risky': is_risky,
+                'risk_score': round(float(ensemble_risk), 2),
+                'is_risky': bool(is_risky),
                 'confidence': 0.92,
                 'factors': ['Ensemble Prediction', 'Isolation Forest checked'],
                 'ml_status': 'Active'

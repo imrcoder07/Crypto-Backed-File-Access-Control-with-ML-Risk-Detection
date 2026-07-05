@@ -179,22 +179,22 @@ def get_recent_blocks(count: int = 50) -> list:
 
 def save_file(file_id: str, filename: str, safe_filename: str, path: str,
               salt: str, owner: str, file_size: int, file_size_mb: float,
-              requires_password: bool = True) -> None:
+              file_hash: str = None, requires_password: bool = True) -> None:
     sql = """
         INSERT INTO files
             (file_id, filename, safe_filename, path, salt, owner,
-             file_size, file_size_mb, requires_password)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+             file_size, file_size_mb, file_hash, requires_password)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT (file_id) DO NOTHING;
     """
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute(sql, (file_id, filename, safe_filename, path, salt,
-                              owner, file_size, file_size_mb, requires_password))
+                              owner, file_size, file_size_mb, file_hash, requires_password))
 
 
 def create_file_record(file_id: str, owner: str, filename: str,
-                       path: str, file_size: int) -> None:
+                       path: str, file_size: int, file_hash: str = None) -> None:
     """Backward-compatible wrapper used by the upload route."""
     file_size_mb = round(file_size / (1024 * 1024), 4) if file_size else 0.0
     save_file(
@@ -206,8 +206,18 @@ def create_file_record(file_id: str, owner: str, filename: str,
         owner=owner,
         file_size=file_size,
         file_size_mb=file_size_mb,
+        file_hash=file_hash,
         requires_password=True,
     )
+
+
+def get_file_by_name_and_owner(filename: str, owner: str) -> dict | None:
+    sql = "SELECT * FROM files WHERE filename = %s AND owner = %s ORDER BY uploaded_at DESC LIMIT 1;"
+    with get_db() as conn:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(sql, (filename, owner))
+            row = cur.fetchone()
+    return dict(row) if row else None
 
 
 def get_file(file_id: str) -> dict | None:
