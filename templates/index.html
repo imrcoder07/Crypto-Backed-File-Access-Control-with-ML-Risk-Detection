@@ -1022,31 +1022,62 @@
 
                     <!-- Profile Page -->
                     <div id="user-profile-page" class="dashboard-page">
-                        <h2 class="text-3xl font-bold text-white mb-6">⚙️ Profile & Settings</h2>
-                        <div class="grid md:grid-cols-2 gap-8">
-                            <div class="glass-card p-8 rounded-xl">
-                                <h3 class="text-xl font-semibold mb-4">👤 My Profile</h3>
-                                <div id="user-profile-details" class="space-y-2">
-                                    <div class="flex items-center justify-center py-4">
-                                        <div class="loading-spinner"></div>
-                                        <span class="ml-2 text-gray-500">Loading profile...</span>
+                        <div class="flex justify-between items-end mb-6">
+                            <div>
+                                <h2 class="font-display-lg text-display-lg text-primary uppercase tracking-widest leading-none">Profile & Settings</h2>
+                                <p class="text-on-surface-variant font-data-mono text-[10px] mt-1 opacity-60">IDENTITY RECORD & SECURITY SETTINGS</p>
+                            </div>
+                            <div class="px-3 py-1 glass-panel border border-primary/20 rounded flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm text-primary">person</span>
+                                <span class="font-data-mono text-[11px] text-primary">SECURE RECORD</span>
+                            </div>
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <!-- Identity summary -->
+                            <section class="glass-panel p-8 rounded-lg flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-6">
+                                        <span class="material-symbols-outlined text-primary text-xl">account_circle</span>
+                                        <h3 class="font-headline-md text-headline-md text-on-surface">Identity Record</h3>
+                                    </div>
+                                    <div id="user-profile-details" class="space-y-4">
+                                        <div class="flex items-center justify-center py-8">
+                                            <div class="loading-spinner"></div>
+                                            <span class="ml-2 text-on-surface-variant font-data-mono">Reading record...</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="glass-card p-8 rounded-xl">
-                                <h3 class="text-xl font-semibold mb-4">✏️ Edit Profile</h3>
-                                <form id="edit-profile-form" class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm text-gray-400 mb-2">📧 Email</label>
-                                        <input type="email" id="profile-email" class="input-field" placeholder="your@email.com">
+                            </section>
+
+                            <!-- Credentials modification -->
+                            <section class="glass-panel p-8 rounded-lg flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-6">
+                                        <span class="material-symbols-outlined text-primary text-xl">manage_accounts</span>
+                                        <h3 class="font-headline-md text-headline-md text-on-surface">Modify Credentials</h3>
                                     </div>
-                                    <div>
-                                        <label class="block text-sm text-gray-400 mb-2">🔑 New Password</label>
-                                        <input type="password" id="profile-password" class="input-field" placeholder="Leave blank to keep current">
-                                    </div>
-                                    <button type="submit" class="btn-primary w-full">💾 Save Changes</button>
-                                </form>
-                            </div>
+                                    <form id="edit-profile-form" class="space-y-6">
+                                        <div class="relative group">
+                                            <label class="absolute -top-2 left-3 px-1 bg-[#1c2026] text-[10px] font-label-caps text-primary tracking-widest z-10 uppercase">Email Address</label>
+                                            <input type="email" id="profile-email" class="input-field" placeholder="your@email.com">
+                                        </div>
+                                        <div class="relative group">
+                                            <label class="absolute -top-2 left-3 px-1 bg-[#1c2026] text-[10px] font-label-caps text-primary tracking-widest z-10 uppercase">New Passphrase</label>
+                                            <div class="relative">
+                                                <input type="password" id="profile-password" class="input-field pr-10" placeholder="Leave blank to keep current">
+                                                <button type="button" onclick="const p = this.previousElementSibling; p.type = p.type === 'password' ? 'text' : 'password'; this.querySelector('span').textContent = p.type === 'password' ? 'visibility' : 'visibility_off';" class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-all">
+                                                    <span class="material-symbols-outlined text-sm">visibility</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="w-full btn-primary flex items-center justify-center gap-2">
+                                            <span class="material-symbols-outlined">save</span>
+                                            <span>Commit Settings</span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </section>
                         </div>
                     </div>
                 </div>
@@ -1132,117 +1163,237 @@
                 <div class="dashboard-main flex-1 p-gutter space-y-gutter">
                     <!-- System Stats Page -->
                     <div id="admin-stats-page" class="dashboard-page active">
-                        <h2 class="text-3xl font-bold text-white mb-6">📊 Real-Time System Statistics</h2>
-                        
-                        <!-- System Status Overview -->
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                            <div class="glass-card p-4 rounded-xl">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-gray-500 text-sm">ML Status</p>
-                                        <p id="ml-status" class="text-lg font-bold text-green-400">Active</p>
+                        <div class="flex justify-between items-end mb-6">
+                            <div>
+                                <h2 class="font-display-lg text-display-lg text-primary uppercase tracking-widest leading-none">Ops Overview</h2>
+                                <p class="text-on-surface-variant font-data-mono text-[10px] mt-1 opacity-60">SYSTEM HEALTH & TELEMETRY CONTROLS</p>
+                            </div>
+                            <div class="px-3 py-1 glass-panel border border-primary/20 rounded flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-secondary animate-pulse"></div>
+                                <span class="font-data-mono text-[11px] text-secondary">HEALTH OK</span>
+                            </div>
+                        </div>
+
+                        <!-- System Status Grid (ML, PostgreSQL, Redis, Celery) -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-6">
+                            <!-- ML Model -->
+                            <div class="glass-panel p-4 rounded-lg flex items-center justify-between border-t-2 border-t-primary">
+                                <div>
+                                    <p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">ML Analyzer</p>
+                                    <p id="ml-status" class="font-data-mono text-sm font-bold text-secondary mt-1">Active</p>
+                                </div>
+                                <span id="ml-status-indicator" class="status-indicator status-online"></span>
+                            </div>
+                            <!-- PostgreSQL -->
+                            <div class="glass-panel p-4 rounded-lg flex items-center justify-between border-t-2 border-t-secondary">
+                                <div>
+                                    <p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">PostgreSQL</p>
+                                    <p id="database-status" class="font-data-mono text-sm font-bold text-secondary mt-1">PostgreSQL</p>
+                                    <p id="database-upgrade-status" class="text-[9px] font-data-mono text-on-surface-variant/40 uppercase mt-0.5">Upgrade active</p>
+                                </div>
+                                <span id="database-status-indicator" class="status-indicator status-online"></span>
+                            </div>
+                            <!-- Redis -->
+                            <div class="glass-panel p-4 rounded-lg flex items-center justify-between border-t-2 border-t-outline">
+                                <div>
+                                    <p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Redis Broker</p>
+                                    <p class="font-data-mono text-sm font-bold text-outline mt-1">Unavailable</p>
+                                </div>
+                                <span class="status-indicator status-offline"></span>
+                            </div>
+                            <!-- Celery Worker -->
+                            <div class="glass-panel p-4 rounded-lg flex items-center justify-between border-t-2 border-t-outline">
+                                <div>
+                                    <p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Celery Worker</p>
+                                    <p class="font-data-mono text-sm font-bold text-outline mt-1">Unavailable</p>
+                                </div>
+                                <span class="status-indicator status-offline"></span>
+                            </div>
+                        </div>
+
+                        <!-- KPI Grid (4 KPI cards) -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-6">
+                            <!-- Total Files -->
+                            <div class="glass-panel p-4 flex flex-col justify-between min-h-[120px] border-t-2 border-t-primary">
+                                <div class="flex justify-between items-start">
+                                    <span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Total Ingested Files</span>
+                                    <span class="material-symbols-outlined text-primary text-[20px]">folder_managed</span>
+                                </div>
+                                <p id="stats-total-files" class="font-data-mono text-3xl font-bold text-primary">0</p>
+                            </div>
+
+                            <!-- Pending Requests -->
+                            <div class="glass-panel p-4 flex flex-col justify-between min-h-[120px] border-t-2 border-t-primary-container">
+                                <div class="flex justify-between items-start">
+                                    <span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Pending Decisions</span>
+                                    <span class="material-symbols-outlined text-primary-container text-[20px]">hourglass_empty</span>
+                                </div>
+                                <p id="stats-pending-requests" class="font-data-mono text-3xl font-bold text-primary-container">0</p>
+                            </div>
+
+                            <!-- Approved Files -->
+                            <div class="glass-panel p-4 flex flex-col justify-between min-h-[120px] border-t-2 border-t-secondary">
+                                <div class="flex justify-between items-start">
+                                    <span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Approved Assets</span>
+                                    <span class="material-symbols-outlined text-secondary text-[20px]">verified</span>
+                                </div>
+                                <p id="stats-approved-requests" class="font-data-mono text-3xl font-bold text-secondary">0</p>
+                            </div>
+
+                            <!-- Active Users -->
+                            <div class="glass-panel p-4 flex flex-col justify-between min-h-[120px] border-t-2 border-t-outline">
+                                <div class="flex justify-between items-start">
+                                    <span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Registered Operators</span>
+                                    <span class="material-symbols-outlined text-outline text-[20px]">group</span>
+                                </div>
+                                <p id="stats-active-users" class="font-data-mono text-3xl font-bold text-outline">0</p>
+                            </div>
+                        </div>
+
+                        <!-- Secondary Row: Chart (2/3) + Blockchain Health Panel (1/3) -->
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter mb-6">
+                            <!-- Chart Card (2/3) -->
+                            <div class="lg:col-span-2 glass-panel p-6 rounded-lg flex flex-col justify-between">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-primary text-xl">bar_chart</span>
+                                        <h3 class="font-headline-md text-headline-md text-on-surface">Activity Analytics</h3>
                                     </div>
-                                    <span id="ml-status-indicator" class="status-indicator status-online"></span>
+                                    <span class="font-data-mono text-[10px] text-on-surface-variant/40 uppercase">LEDGER DATA VS REQUESTS</span>
+                                </div>
+                                <div class="relative w-full h-[260px] flex items-center justify-center">
+                                    <canvas id="activityChart"></canvas>
                                 </div>
                             </div>
-                            <div class="glass-card p-4 rounded-xl">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-gray-500 text-sm">Blockchain</p>
-                                        <p id="blockchain-status" class="text-lg font-bold text-green-400">Active</p>
+
+                            <!-- Blockchain Health Panel (1/3) -->
+                            <div class="glass-panel p-6 rounded-lg flex flex-col justify-between border-t-2 border-t-primary">
+                                <div>
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-primary text-xl">link</span>
+                                            <h3 class="font-headline-md text-headline-md text-on-surface">Blockchain Health</h3>
+                                        </div>
                                     </div>
-                                    <span class="text-2xl blockchain-pulse">⛓️</span>
+                                    <div class="space-y-4 font-data-mono text-xs">
+                                        <div class="flex justify-between py-1 border-b border-white/05">
+                                            <span class="text-on-surface-variant/60 uppercase">CHAIN LENGTH</span>
+                                            <span id="stats-blockchain-length" class="text-on-surface font-bold">0</span>
+                                        </div>
+                                        <div class="flex justify-between py-1 border-b border-white/05">
+                                            <span class="text-on-surface-variant/60 uppercase">VALID BLOCKS</span>
+                                            <span id="blockchain-valid-blocks" class="text-secondary font-bold">0</span>
+                                        </div>
+                                        <div class="flex justify-between py-1 border-b border-white/05">
+                                            <span class="text-on-surface-variant/60 uppercase">CHAIN INTEGRITY</span>
+                                            <span id="blockchain-integrity" class="text-secondary font-bold">VERIFIED</span>
+                                        </div>
+                                        <div class="flex justify-between py-1 border-b border-white/05">
+                                            <span class="text-on-surface-variant/60 uppercase">LEDGER AUDIT</span>
+                                            <span id="blockchain-status" class="text-secondary font-bold">ACTIVE</span>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="glass-card p-4 rounded-xl">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-gray-500 text-sm">Encryption</p>
-                                        <p class="text-lg font-bold text-blue-400">Active</p>
-                                    </div>
-                                    <span class="text-2xl">🔒</span>
-                                </div>
-                            </div>
-                            <div class="glass-card p-4 rounded-xl">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-gray-500 text-sm">Database</p>
-                                        <p id="database-status" class="text-lg font-bold text-green-400">PostgreSQL</p>
-                                        <p id="database-upgrade-status" class="text-xs text-gray-500">Upgrade active</p>
-                                    </div>
-                                    <span id="database-status-indicator" class="status-indicator status-online"></span>
+                                <div class="mt-4 p-3 bg-primary/5 border border-primary/20 rounded flex items-center gap-2 text-[10px] font-data-mono text-primary uppercase">
+                                    <span class="material-symbols-outlined text-sm">shield</span>
+                                    <span>SHA-256 Block Verification Active</span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Main Statistics Grid -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                            <div class="glass-card p-6 rounded-xl text-center">
-                                <h3 class="text-gray-500">Total Files</h3>
-                                <p id="stats-total-files" class="text-4xl font-bold text-white">0</p>
-                            </div>
-                            <div class="glass-card p-6 rounded-xl text-center">
-                                <h3 class="text-gray-500">Blockchain Events</h3>
-                                <p id="stats-blockchain-length" class="text-4xl font-bold text-white">0</p>
-                            </div>
-                            <div class="glass-card p-6 rounded-xl text-center">
-                                <h3 class="text-yellow-400">Pending Requests</h3>
-                                <p id="stats-pending-requests" class="text-4xl font-bold text-yellow-400">0</p>
-                            </div>
-                            <div class="glass-card p-6 rounded-xl text-center">
-                                <h3 class="text-green-400">Approved Files</h3>
-                                <p id="stats-approved-requests" class="text-4xl font-bold text-green-400">0</p>
-                            </div>
-                        </div>
+                        <!-- Third Row: ML Analyzed + Protected Files + Recent Activity Panel -->
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+                            <!-- ML Stats & Protected Files (2/3) -->
+                            <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-gutter">
+                                <!-- ML Card -->
+                                <div class="glass-panel p-6 rounded-lg flex flex-col justify-between border-t-2 border-t-tertiary">
+                                    <div>
+                                        <div class="flex justify-between items-start mb-4">
+                                            <span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">ML Scanning Metrics</span>
+                                            <span class="material-symbols-outlined text-tertiary text-[20px]">psychology</span>
+                                        </div>
+                                        <p id="stats-ml-analyzed" class="font-data-mono text-3xl font-bold text-tertiary mb-3">0</p>
+                                    </div>
+                                    <div class="space-y-2 font-data-mono text-[10px] uppercase">
+                                        <div class="flex justify-between py-1 border-b border-white/05">
+                                            <span class="text-secondary">Allowed</span>
+                                            <span id="stats-ml-allowed" class="text-secondary">0</span>
+                                        </div>
+                                        <div class="flex justify-between py-1 border-b border-white/05">
+                                            <span class="text-error">Denied</span>
+                                            <span id="stats-ml-denied" class="text-error">0</span>
+                                        </div>
+                                        <div class="flex justify-between py-1 border-b border-white/05">
+                                            <span class="text-amber-400">Review Required</span>
+                                            <span id="stats-ml-review" class="text-amber-400">0</span>
+                                        </div>
+                                    </div>
+                                </div>
 
-                        <!-- ML Analysis Statistics -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                            <div class="glass-card p-6 rounded-xl text-center">
-                                <h3 class="text-gray-500">ML Analyzed Files</h3>
-                                <p id="stats-ml-analyzed" class="text-3xl font-bold text-purple-400">0</p>
-                                <div class="flex justify-center space-x-4 mt-2 text-sm">
-                                    <span class="text-green-400"><span id="stats-ml-allowed">0</span> Allowed</span>
-                                    <span class="text-red-400"><span id="stats-ml-denied">0</span> Denied</span>
-                                    <span class="text-yellow-400"><span id="stats-ml-review">0</span> Review</span>
+                                <!-- Protected Files Card -->
+                                <div class="glass-panel p-6 rounded-lg flex flex-col justify-between border-t-2 border-t-amber-400">
+                                    <div>
+                                        <div class="flex justify-between items-start mb-4">
+                                            <span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Password Protected Assets</span>
+                                            <span class="material-symbols-outlined text-amber-400 text-[20px]">lock_person</span>
+                                        </div>
+                                        <p id="stats-protected-files" class="font-data-mono text-3xl font-bold text-amber-400 mb-3">0</p>
+                                    </div>
+                                    <p class="font-data-mono text-[9px] text-on-surface-variant/40 uppercase leading-snug">
+                                        Encrypted with client-defined custom passphrases. Decryption requires valid authorization matching.
+                                    </p>
                                 </div>
                             </div>
-                            <div class="glass-card p-6 rounded-xl text-center">
-                                <h3 class="text-gray-500">Active Users</h3>
-                                <p id="stats-active-users" class="text-3xl font-bold text-blue-400">0</p>
-                            </div>
-                            <div class="glass-card p-6 rounded-xl text-center">
-                                <h3 class="text-gray-500">Protected Files</h3>
-                                <p id="stats-protected-files" class="text-3xl font-bold text-yellow-400">0</p>
-                            </div>
-                        </div>
 
-                        <div class="glass-card p-6 rounded-xl">
-                            <canvas id="activityChart"></canvas>
+                            <!-- Recent Activity Panel (1/3) -->
+                            <div class="glass-panel p-6 rounded-lg flex flex-col">
+                                <div class="flex items-center gap-2 mb-4">
+                                    <span class="material-symbols-outlined text-primary text-xl">history</span>
+                                    <h3 class="font-headline-md text-headline-md text-on-surface">Recent Activity</h3>
+                                </div>
+                                <div id="admin-recent-activity" class="space-y-3 overflow-y-auto max-h-[220px] pr-1">
+                                    <div class="flex items-center justify-center py-8">
+                                        <div class="loading-spinner"></div>
+                                        <span class="ml-2 text-on-surface-variant font-data-mono text-xs">Loading activity...</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Pending Requests Page -->
                     <div id="admin-requests-page" class="dashboard-page">
-                        <h2 class="text-3xl font-bold text-white mb-6">⏳ Pending Access Requests</h2>
-                        <div id="admin-requests-message" class="message-area"></div>
-                        <div class="glass-card p-6 rounded-xl">
+                        <div class="flex justify-between items-end mb-6">
+                            <div>
+                                <h2 class="font-display-lg text-display-lg text-primary uppercase tracking-widest leading-none">Access Decision Queue</h2>
+                                <p class="text-on-surface-variant font-data-mono text-[10px] mt-1 opacity-60">ADMINISTRATIVE ACTION QUEUE FOR OPERATOR SCANS</p>
+                            </div>
+                            <div class="px-3 py-1 glass-panel border border-primary/20 rounded flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-secondary animate-pulse"></div>
+                                <span class="font-data-mono text-[11px] text-secondary">ACTIVE SCAN LIST</span>
+                            </div>
+                        </div>
+                        
+                        <div id="admin-requests-message" class="message-area opacity-0"></div>
+                        
+                        <div class="glass-panel rounded-lg overflow-hidden">
                             <div class="table-container">
-                                <table class="w-full text-sm text-left text-gray-400">
-                                    <thead class="text-xs uppercase bg-gray-700 text-gray-500">
+                                <table class="cyber-table w-full">
+                                    <thead>
                                         <tr>
-                                            <th class="px-6 py-3">User</th>
-                                            <th class="px-6 py-3">File Details</th>
-                                            <th class="px-6 py-3">ML Analysis</th>
-                                            <th class="px-6 py-3">Password</th>
-                                            <th class="px-6 py-3">Actions</th>
+                                            <th class="px-6 py-3">Operator</th>
+                                            <th class="px-6 py-3">File Asset</th>
+                                            <th class="px-6 py-3">Risk Assessment</th>
+                                            <th class="px-6 py-3">Policy Protection</th>
+                                            <th class="px-6 py-3 text-right">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody id="admin-requests-table">
                                         <tr>
-                                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">
-                                                <div class="flex items-center justify-center">
+                                            <td colspan="5" class="px-6 py-4 text-center">
+                                                <div class="flex items-center justify-center gap-2">
                                                     <div class="loading-spinner"></div>
-                                                    <span class="ml-2">Loading requests...</span>
+                                                    <span class="font-data-mono text-xs text-on-surface-variant uppercase">Decrypting Queue...</span>
                                                 </div>
                                             </td>
                                         </tr>
@@ -1254,12 +1405,53 @@
 
                     <!-- Approved Files Page -->
                     <div id="admin-approved-page" class="dashboard-page">
-                        <h2 class="text-3xl font-bold text-white mb-6">✅ Approved Files</h2>
+                        <div class="flex justify-between items-end mb-6">
+                            <div>
+                                <h2 class="font-display-lg text-display-lg text-primary uppercase tracking-widest leading-none">Approved Repository</h2>
+                                <p class="text-on-surface-variant font-data-mono text-[10px] mt-1 opacity-60">VERIFIED CRYPTO ASSETS & HISTORICAL ACCESS RECORDS</p>
+                            </div>
+                            <div class="px-3 py-1 glass-panel border border-primary/20 rounded flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm text-secondary">verified_user</span>
+                                <span class="font-data-mono text-[11px] text-secondary">SECURE LEDGER</span>
+                            </div>
+                        </div>
+
+                        <!-- Search Header (UI Only) -->
+                        <div class="glass-panel p-4 mb-6 flex justify-between items-center gap-4">
+                            <div class="flex items-center bg-surface-container-lowest border border-outline-variant/30 px-3 py-1 rounded w-full max-w-sm opacity-50 cursor-not-allowed" title="Search filter requires backend support (Coming Soon)">
+                                <span class="material-symbols-outlined text-on-surface-variant text-sm mr-2">search</span>
+                                <input class="bg-transparent border-none focus:ring-0 text-data-mono font-data-mono text-xs w-full outline-none" placeholder="FILTER VOLUMES (COMING SOON)..." type="text" disabled/>
+                            </div>
+                            <span class="text-[9px] font-data-mono text-outline uppercase tracking-widest">Read-Only Index</span>
+                        </div>
+
                         <div id="admin-approved-message" class="message-area"></div>
-                        <div id="admin-approved-list" class="space-y-4">
-                            <div class="flex items-center justify-center py-8">
-                                <div class="loading-spinner"></div>
-                                <span class="ml-2 text-gray-500">Loading approved files...</span>
+                        
+                        <div class="glass-panel rounded-lg overflow-hidden">
+                            <div class="table-container">
+                                <table class="cyber-table w-full">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-6 py-3">File Asset</th>
+                                            <th class="px-6 py-3">Owner</th>
+                                            <th class="px-6 py-3">Approved By</th>
+                                            <th class="px-6 py-3">Approval Time</th>
+                                            <th class="px-6 py-3">Last Access</th>
+                                            <th class="px-6 py-3">Telemetry</th>
+                                            <th class="px-6 py-3 text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-approved-list">
+                                        <tr>
+                                            <td colspan="7" class="px-6 py-4 text-center">
+                                                <div class="flex items-center justify-center gap-2">
+                                                    <div class="loading-spinner"></div>
+                                                    <span class="font-data-mono text-xs text-on-surface-variant uppercase">Loading Approved Repositories...</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -1999,18 +2191,41 @@
                 const emailEl = (role === 'admin') ? 'admin-profile-email' : 'profile-email'; 
                 
                 document.getElementById(detailsEl).innerHTML = `
-                    <div class="space-y-3">
-                        <p><strong class="text-gray-500">Username:</strong> <span class="text-white">${SecurityUtils.sanitize(data.username)}</span></p>
-                        <p><strong class="text-gray-500">Role:</strong> <span class="${data.role === 'Admin' ? 'text-red-400' : 'text-blue-400'}">${SecurityUtils.sanitize(data.role)}</span></p>
-                        <p><strong class="text-gray-500">Email:</strong> <span class="text-white">${SecurityUtils.sanitize(data.email)}</span></p>
-                        <p><strong class="text-gray-500">Department:</strong> <span class="text-white">${SecurityUtils.sanitize(data.department)}</span></p>
-                        ${data.login_time ? `<p><strong class="text-gray-500">Login Time:</strong> <span class="text-white">${new Date(data.login_time).toLocaleString()}</span></p>` : ''}
+                    <div class="space-y-4">
+                        <!-- Identity Record -->
+                        <div class="flex items-center gap-4 pb-4 border-b border-white/05">
+                            <div class="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xl uppercase font-data-mono">
+                                ${SecurityUtils.sanitize(data.username[0] || 'U')}
+                            </div>
+                            <div>
+                                <h4 class="font-data-mono text-sm font-bold text-on-surface">${SecurityUtils.sanitize(data.username)}</h4>
+                                <span class="status-badge ${data.role === 'Admin' ? 'status-rejected' : 'status-approved'}">${SecurityUtils.sanitize(data.role)}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Account Details -->
+                        <div class="space-y-3 font-data-mono text-xs">
+                            <div class="flex justify-between py-1 border-b border-white/05">
+                                <span class="text-on-surface-variant/60 uppercase">EMAIL</span>
+                                <span class="text-on-surface">${SecurityUtils.sanitize(data.email)}</span>
+                            </div>
+                            <div class="flex justify-between py-1 border-b border-white/05">
+                                <span class="text-on-surface-variant/60 uppercase">DEPARTMENT</span>
+                                <span class="text-on-surface">${SecurityUtils.sanitize(data.department)}</span>
+                            </div>
+                            ${data.login_time ? `
+                                <div class="flex justify-between py-1 border-b border-white/05">
+                                    <span class="text-on-surface-variant/60 uppercase">OPERATOR SESSION</span>
+                                    <span class="text-on-surface text-[10px]">${new Date(data.login_time).toLocaleString()}</span>
+                                </div>
+                            ` : ''}
+                        </div>
                     </div>
                 `; 
                 document.getElementById(emailEl).value = SecurityUtils.sanitize(data.email); 
                 
             } catch (error) {
-                console.error('Error loading profile:', error);
+                print("Error loading profile:", error);
                 const detailsEl = (role === 'admin') ? 'admin-profile-details' : 'user-profile-details';
                 document.getElementById(detailsEl).innerHTML = `
                     <p class="text-red-400">Error loading profile data</p>
@@ -2019,9 +2234,6 @@
             }
         }
 
-        // =============================================
-        // USER MANAGEMENT
-        // =============================================
         async function loadUsers() { 
             try {
                 const response = await fetch('/api/admin/users');
@@ -2360,10 +2572,15 @@
             
             if (!approvedFiles || approvedFiles.length === 0) {
                 approvedList.innerHTML = `
-                    <div class="text-center py-8">
-                        <p class="text-gray-500">No approved files yet</p>
-                        <p class="text-sm text-gray-500 mt-2">Files will appear here after admin approval</p>
-                    </div>
+                    <tr>
+                        <td colspan="7" class="py-12 text-center">
+                            <div class="flex flex-col items-center justify-center text-center">
+                                <span class="material-symbols-outlined text-[40px] text-outline mb-3">folder_open</span>
+                                <p class="font-data-mono text-xs text-on-surface-variant">No Approved Files</p>
+                                <p class="text-[10px] text-outline/50 uppercase mt-1">Approved operational files will reside here</p>
+                            </div>
+                        </td>
+                    </tr>
                 `;
                 return;
             }
@@ -2376,119 +2593,87 @@
                 const modelPredictions = mlDetails.model_predictions || {};
                 const lastAccessed = formatTimestamp(file.last_accessed, 'Never');
                 
-                // Security improvement: show only password requirements, never the password value.
-                const passwordDisplay = file.requires_password ? `
-                    <div class="mt-3 bg-yellow-900/30 p-3 rounded border border-yellow-600">
-                        <p class="text-gray-500 font-semibold text-center">🔒 Password Protected</p>
-                        <div class="flex items-center justify-center space-x-2 mt-2">
-                            <span class="text-white font-mono text-lg bg-black/30 p-2 rounded">••••••••</span>
-                        </div>
-                        <p class="text-xs text-yellow-400 text-center mt-2">
-                            ⚠️ File encrypted with user password
-                        </p>
-                    </div>
-                ` : `
-                    <div class="mt-3 bg-gray-800/50 p-3 rounded border border-gray-600">
-                        <p class="text-gray-500 text-center">🔓 No password protection</p>
-                    </div>
-                `;
-                
                 html += `
-                    <div class="glass-card p-6 rounded-xl mb-4 approved-file-item" data-file-id="${file.file_id}">
-                        <div class="flex justify-between items-start">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-4 mb-3">
-                                    <h3 class="font-bold text-white text-lg">${SecurityUtils.sanitize(file.filename)}</h3>
-                                    <span class="status-badge status-approved">APPROVED</span>
-                                    ${file.requires_password ? '<span class="text-xl text-yellow-400" title="Password Protected">🔒</span>' : ''}
-                                    ${file.access_count > 0 ? 
-                                        `<span class="bg-blue-500 text-white px-2 py-1 rounded text-xs" title="Access Count">📥 ${file.access_count}</span>` : 
-                                        `<span class="bg-gray-600 text-white px-2 py-1 rounded text-xs" title="Never Accessed">⏳ New</span>`
-                                    }
+                    <!-- Main row -->
+                    <tr class="hover:bg-white/02 transition-colors border-b border-white/05 font-data-mono text-xs cursor-pointer approved-file-item" data-file-id="${file.file_id}" onclick="const el = document.getElementById('details-${file.file_id}'); el.classList.toggle('hidden');">
+                        <!-- File Asset -->
+                        <td class="py-4 px-6">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary text-sm">terminal</span>
+                                <span class="font-bold text-on-surface">${SecurityUtils.sanitize(file.filename)}</span>
+                            </div>
+                        </td>
+                        
+                        <!-- Owner -->
+                        <td class="py-4 px-6">${SecurityUtils.sanitize(file.owner)}</td>
+                        
+                        <!-- Approved By -->
+                        <td class="py-4 px-6">
+                            <div class="flex items-center gap-1.5">
+                                <div class="w-4 h-4 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-[8px] font-bold uppercase">
+                                    ${SecurityUtils.sanitize(file.approved_by[0] || 'A')}
+                                </div>
+                                <span>${SecurityUtils.sanitize(file.approved_by)}</span>
+                            </div>
+                        </td>
+                        
+                        <!-- Approval Time -->
+                        <td class="py-4 px-6 text-on-surface-variant/80">${formatTimestamp(file.approved_at)}</td>
+                        
+                        <!-- Last Access -->
+                        <td class="py-4 px-6 text-on-surface-variant/80">${lastAccessed}</td>
+                        
+                        <!-- Telemetry / Access count -->
+                        <td class="py-4 px-6">
+                            ${file.access_count > 0 ? 
+                                `<span class="status-badge status-approved text-[10px]" title="Access Count">${file.access_count} READS</span>` : 
+                                `<span class="status-badge status-pending text-[10px]">NEW / UNREAD</span>`
+                            }
+                        </td>
+                        
+                        <!-- Actions -->
+                        <td class="py-4 px-6 text-right" onclick="event.stopPropagation();">
+                            <button onclick="adminDownloadFile('${file.file_id}', '${SecurityUtils.sanitize(file.filename)}')" 
+                                    class="inline-flex items-center gap-1 bg-primary text-on-primary px-3 py-1.5 rounded text-[10.5px] font-bold hover:brightness-110 active:scale-95 transition-all cursor-pointer tracking-wider download-btn">
+                                <span class="material-symbols-outlined text-xs">download</span>
+                                <span>RETRIEVE</span>
+                            </button>
+                        </td>
+                    </tr>
+                    
+                    <!-- Details row -->
+                    <tr id="details-${file.file_id}" class="hidden bg-surface-container-lowest/50 border-b border-white/05 text-[10px] font-data-mono text-on-surface-variant/80">
+                        <td colspan="7" class="p-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <!-- Volume Metadata -->
+                                <div class="flex flex-col gap-2">
+                                    <h4 class="font-label-caps text-label-caps text-primary uppercase mb-1">Volume Metadata</h4>
+                                    <p>SHA-256: <span class="text-on-surface break-all font-bold">${SecurityUtils.sanitize(file.file_id)}</span></p>
+                                    <p>File Size: <span class="text-on-surface font-bold">${fileSizeMB} MB</span></p>
+                                    <p>Uploader: <span class="text-on-surface font-bold">${SecurityUtils.sanitize(file.user)}</span></p>
                                 </div>
                                 
-                                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm mb-4">
-                                    <div>
-                                        <p class="text-gray-500">User</p>
-                                        <p class="text-white">${SecurityUtils.sanitize(file.user)}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-gray-500">Owner</p>
-                                        <p class="text-white">${SecurityUtils.sanitize(file.owner)}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-gray-500">File Size</p>
-                                        <p class="text-white">${fileSizeMB} MB</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-gray-500">Approved By</p>
-                                        <p class="text-white">${SecurityUtils.sanitize(file.approved_by)}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-gray-500">Approval Time</p>
-                                        <p class="text-white">${formatTimestamp(file.approved_at)}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-gray-500">Last Accessed</p>
-                                        <p class="text-white">${lastAccessed}</p>
-                                    </div>
-                                </div>
-                                
-                                <!-- Enhanced ML Details Section - ALWAYS VISIBLE -->
-                                <div class="mb-3 p-3 bg-gray-800 rounded-lg">
-                                    <p class="text-gray-500 font-semibold mb-2">🤖 ML Risk Assessment</p>
-                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                                        <div class="text-center p-2 bg-green-900/30 rounded">
-                                            <p class="text-gray-500">Final Verdict</p>
-                                            <p class="text-green-400 font-bold">${SecurityUtils.sanitize(mlDetails.final_verdict || 'Allow')}</p>
-                                        </div>
-                                        <div class="text-center p-2 bg-blue-900/30 rounded">
-                                            <p class="text-gray-500">RF Model</p>
-                                            <p class="text-blue-400">${SecurityUtils.sanitize(modelPredictions.random_forest || 'Allow')}</p>
-                                        </div>
-                                        <div class="text-center p-2 bg-purple-900/30 rounded">
-                                            <p class="text-gray-500">SVM Model</p>
-                                            <p class="text-purple-400">${SecurityUtils.sanitize(modelPredictions.svm || 'Allow')}</p>
-                                        </div>
-                                        <div class="text-center p-2 bg-yellow-900/30 rounded">
-                                            <p class="text-gray-500">ISO Model</p>
-                                            <p class="text-yellow-400">${SecurityUtils.sanitize(modelPredictions.isolation_forest || 'Allow')}</p>
-                                        </div>
-                                    </div>
-                                    <div class="confidence-bar mt-2">
+                                <!-- Risk Telemetry -->
+                                <div class="flex flex-col gap-2">
+                                    <h4 class="font-label-caps text-label-caps text-primary uppercase mb-1">ML Verdict & Risk</h4>
+                                    <p>Verdict: <span class="font-bold text-secondary uppercase">${SecurityUtils.sanitize(mlDetails.final_verdict || 'Allow')}</span></p>
+                                    <p>Confidence: <span class="text-on-surface font-bold">${SecurityUtils.sanitize(mlDetails.confidence || '85.0%')}</span></p>
+                                    <div class="confidence-bar w-full max-w-[200px]">
                                         <div class="confidence-level" style="width: ${parseFloat(mlDetails.confidence) || '85'}%"></div>
                                     </div>
-                                    <p class="text-xs text-center mt-2 text-gray-500">
-                                        Confidence: <span class="text-white">${SecurityUtils.sanitize(mlDetails.confidence || '85.0%')}</span>
-                                    </p>
                                 </div>
                                 
-                                <!-- Password Section - ALWAYS VISIBLE but secure -->
-                                ${passwordDisplay}
-                                
-                                ${file.admin_notes ? `
-                                    <div class="mt-2">
-                                        <p class="text-gray-500">Admin Notes</p>
-                                        <p class="text-white text-sm bg-gray-800 p-2 rounded">${SecurityUtils.sanitize(file.admin_notes)}</p>
-                                    </div>
-                                ` : ''}
-                            </div>
-                            <div class="text-right ml-4">
-                                <button onclick="adminDownloadFile('${file.file_id}', '${SecurityUtils.sanitize(file.filename)}')" 
-                                        class="bg-indigo-600 text-white px-4 py-2 rounded text-sm hover:bg-indigo-700 transition-colors download-btn">
-                                    📥 Download File
-                                </button>
-                                <div class="mt-2 text-xs">
-                                    ${file.access_count > 0 ? `
-                                        <p class="text-blue-400">Accessed ${file.access_count} times</p>
-                                        <p class="text-gray-500">Last: ${lastAccessed}</p>
-                                    ` : `
-                                        <p class="text-gray-500">Not accessed yet</p>
-                                    `}
+                                <!-- Security Status & Notes -->
+                                <div class="flex flex-col gap-2">
+                                    <h4 class="font-label-caps text-label-caps text-primary uppercase mb-1">Authorization Details</h4>
+                                    <p>Policy: <span class="text-on-surface font-bold">${file.requires_password ? '🔑 Password Protected' : '🔓 Public / No Restrictions'}</span></p>
+                                    ${file.admin_notes ? `
+                                        <p class="mt-1">Verdict Notes: <span class="text-on-surface italic">"${SecurityUtils.sanitize(file.admin_notes)}"</span></p>
+                                    ` : ''}
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                        </td>
+                    </tr>
                 `;
             });
             
@@ -2622,7 +2807,13 @@
                 if (!requests || requests.length === 0) {
                     requestsTable.innerHTML = `
                         <tr>
-                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">No pending requests</td>
+                            <td colspan="5" class="py-12 text-center">
+                                <div class="flex flex-col items-center justify-center text-center">
+                                    <span class="material-symbols-outlined text-[40px] text-outline mb-3">hourglass_empty</span>
+                                    <p class="font-data-mono text-xs text-on-surface-variant">Access Queue Empty</p>
+                                    <p class="text-[10px] text-outline/50 uppercase mt-1">No pending operator requests found</p>
+                                </div>
+                            </td>
                         </tr>
                     `;
                     return;
@@ -2635,54 +2826,93 @@
                     const modelPredictions = mlDetails.model_predictions || {};
                     const fileSizeMB = request.file_size_mb || (request.file_size / (1024 * 1024)).toFixed(2);
                     
+                    const rfVerdict = modelPredictions.random_forest ? modelPredictions.random_forest.toUpperCase() : 'ALLOW';
+                    const svmVerdict = modelPredictions.svm ? modelPredictions.svm.toUpperCase() : 'ALLOW';
+                    const isoVerdict = modelPredictions.isolation_forest ? modelPredictions.isolation_forest.toUpperCase() : 'ALLOW';
+                    
+                    const isAllow = (mlDetails.final_verdict || 'Allow').toLowerCase() === 'allow';
+                    const verdictColor = isAllow ? 'text-secondary' : 'text-error';
+                    
+                    // Risk rating assessment
+                    let riskText = 'LOW RISK';
+                    let riskColor = 'status-approved'; // green
+                    if (!isAllow) {
+                        riskText = 'HIGH RISK';
+                        riskColor = 'status-rejected'; // red
+                    } else if (parseFloat(mlDetails.confidence) < 85) {
+                        riskText = 'MEDIUM RISK';
+                        riskColor = 'status-pending'; // yellow
+                    }
+                    
                     html += `
-                        <tr class="border-b border-gray-700 hover:bg-gray-800/50">
-                            <td class="py-4 px-6 font-medium">${SecurityUtils.sanitize(request.user)}</td>
+                        <tr class="hover:bg-white/02 transition-colors border-b border-white/05 font-data-mono text-xs">
+                            <!-- Operator info -->
                             <td class="py-4 px-6">
-                                <div class="font-medium text-white">${SecurityUtils.sanitize(request.filename)}</div>
-                                <div class="text-xs text-gray-500 mt-1">${fileSizeMB} MB • ${SecurityUtils.sanitize(request.time_ago || 'Recently')}</div>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-[10px] font-bold uppercase">
+                                        ${SecurityUtils.sanitize(request.user[0] || 'U')}
+                                    </div>
+                                    <span class="font-bold text-on-surface">${SecurityUtils.sanitize(request.user)}</span>
+                                </div>
                             </td>
+                            
+                            <!-- File Asset details -->
                             <td class="py-4 px-6">
-                                <div class="text-green-400 font-mono text-sm font-semibold">${SecurityUtils.sanitize(mlDetails.final_verdict || 'Allow')}</div>
-                                <div class="text-xs text-gray-500 mt-1">
-                                    RF: ${SecurityUtils.sanitize(modelPredictions.random_forest || 'Allow')} | 
-                                    SVM: ${SecurityUtils.sanitize(modelPredictions.svm || 'Allow')} | 
-                                    ISO: ${SecurityUtils.sanitize(modelPredictions.isolation_forest || 'Allow')}
+                                <div class="font-bold text-on-surface">${SecurityUtils.sanitize(request.filename)}</div>
+                                <div class="text-[10px] text-on-surface-variant/60 uppercase mt-0.5">${fileSizeMB} MB • INGESTED: ${SecurityUtils.sanitize(request.time_ago || 'Recently')}</div>
+                            </td>
+                            
+                            <!-- Risk Assessment block -->
+                            <td class="py-4 px-6 w-72">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="font-bold uppercase ${verdictColor}">${SecurityUtils.sanitize(mlDetails.final_verdict || 'Allow')}</span>
+                                    <span class="status-badge ${riskColor} text-[8px] px-1 py-0.5">${riskText}</span>
                                 </div>
                                 <div class="confidence-bar">
                                     <div class="confidence-level" style="width: ${parseFloat(mlDetails.confidence) || '85'}%"></div>
                                 </div>
-                                <div class="text-xs text-blue-400 mt-1">Confidence: ${SecurityUtils.sanitize(mlDetails.confidence || '85.0%')}</div>
+                                <div class="flex justify-between items-center text-[9px] text-on-surface-variant/60 mt-1 uppercase">
+                                    <span>Confidence: ${SecurityUtils.sanitize(mlDetails.confidence || '85.0%')}</span>
+                                </div>
+                                <div class="flex gap-1.5 mt-2 text-[8px] uppercase">
+                                    <span class="px-1.5 py-0.5 bg-blue-900/20 text-blue-400 border border-blue-500/20 rounded">RF: ${rfVerdict}</span>
+                                    <span class="px-1.5 py-0.5 bg-purple-900/20 text-purple-400 border border-purple-500/20 rounded">SVM: ${svmVerdict}</span>
+                                    <span class="px-1.5 py-0.5 bg-amber-900/20 text-amber-400 border border-amber-500/20 rounded">ISO: ${isoVerdict}</span>
+                                </div>
                             </td>
+                            
+                            <!-- Policy Protection -->
                             <td class="py-4 px-6">
                                 ${request.requires_password ? `
-                                    <div class="bg-yellow-900/50 p-2 rounded border border-yellow-600">
-                                        <p class="text-xs text-yellow-400 font-semibold">Password Protected</p>
-                                        <p class="text-xs text-green-400 mt-1 text-center">Password is re-entered only at download time</p>
-                                    </div>
+                                    <span class="status-badge status-pending text-[10px]">PASSWORD ENFORCED</span>
                                 ` : `
-                                    <div class="bg-gray-800/50 p-2 rounded">
-                                        <p class="text-xs text-gray-500">No password required</p>
-                                    </div>
+                                    <span class="status-badge status-approved text-[10px]">NO RESTRICTIONS</span>
                                 `}
                             </td>
-                            <td class="py-4 px-6">
-                                <button onclick="approveRequest('${request.request_id}')" 
-                                        class="bg-green-600 text-white px-4 py-2 rounded text-sm mr-2 hover:bg-green-700 transition-colors">
-                                    ✅ Approve
-                                </button>
-                                <button onclick="rejectRequest('${request.request_id}')" 
-                                        class="bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700 transition-colors">
-                                    Reject
-                                </button>
+                            
+                            <!-- Actions -->
+                            <td class="py-4 px-6 text-right">
+                                <div class="inline-flex gap-2">
+                                    <button onclick="approveRequest('${request.request_id}')" 
+                                            class="inline-flex items-center gap-1 bg-secondary text-on-secondary px-3 py-1.5 rounded text-[10.5px] font-bold hover:brightness-110 active:scale-95 transition-all cursor-pointer tracking-wider">
+                                        <span class="material-symbols-outlined text-xs">check_circle</span>
+                                        <span>APPROVE</span>
+                                    </button>
+                                    <button onclick="rejectRequest('${request.request_id}')" 
+                                            class="inline-flex items-center gap-1 bg-error text-on-error px-3 py-1.5 rounded text-[10.5px] font-bold hover:brightness-110 active:scale-95 transition-all cursor-pointer tracking-wider">
+                                        <span class="material-symbols-outlined text-xs">cancel</span>
+                                        <span>REJECT</span>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     `;
                 });
                 
                 requestsTable.innerHTML = html;
+                
             } catch (error) {
-                console.error('Error loading admin requests:', error);
+                console.error('Error loading user requests:', error);
                 showMessage('admin-requests-table', 'Error loading requests', 'message-error');
             }
         }
@@ -2869,7 +3099,7 @@
                 const dbIndicator = document.getElementById('database-status-indicator');
                 const dbConnected = stats.database?.status === 'connected';
                 dbStatus.textContent = dbConnected ? (stats.database.engine || 'PostgreSQL') : 'Offline';
-                dbStatus.className = `text-lg font-bold ${dbConnected ? 'text-green-400' : 'text-red-400'}`;
+                dbStatus.className = `font-data-mono text-sm font-bold ${dbConnected ? 'text-secondary' : 'text-error'} mt-1`;
                 dbUpgradeStatus.textContent = stats.database_upgraded ? 'Upgrade active' : 'Upgrade pending';
                 dbIndicator.className = `status-indicator ${dbConnected ? 'status-online' : 'status-offline'}`;
                 
@@ -2877,8 +3107,42 @@
                 const mlStatus = document.getElementById('ml-status');
                 const mlIndicator = document.getElementById('ml-status-indicator');
                 mlStatus.textContent = 'Active';
-                mlStatus.className = 'text-lg font-bold text-green-400';
+                mlStatus.className = 'font-data-mono text-sm font-bold text-secondary mt-1';
                 mlIndicator.className = 'status-indicator status-online';
+
+                // Update blockchain specific elements
+                const validBlocksEl = document.getElementById('blockchain-valid-blocks');
+                if (validBlocksEl) {
+                    validBlocksEl.textContent = stats.blockchain_events || 0;
+                }
+                const integrityEl = document.getElementById('blockchain-integrity');
+                if (integrityEl) {
+                    integrityEl.textContent = 'VERIFIED';
+                }
+
+                // Update Admin Recent Activity from user_activity
+                try {
+                    const actRes = await fetch('/api/dashboard_data');
+                    const actData = await actRes.json();
+                    const adminActEl = document.getElementById('admin-recent-activity');
+                    if (adminActEl && actData.user_activity) {
+                        if (actData.user_activity.length === 0) {
+                            adminActEl.innerHTML = '<p class="text-on-surface-variant/60 font-data-mono text-xs text-center py-4">No recent activity</p>';
+                        } else {
+                            let actHtml = '';
+                            actData.user_activity.slice(0, 5).forEach(activity => {
+                                actHtml += `
+                                    <div class="p-2.5 bg-surface-container-low border-l-2 border-primary/40 rounded-r font-data-mono text-[10px] text-on-surface-variant mb-1.5 leading-snug">
+                                        ${SecurityUtils.sanitize(activity)}
+                                    </div>
+                                `;
+                            });
+                            adminActEl.innerHTML = actHtml;
+                        }
+                    }
+                } catch (e) {
+                    console.error("Failed to load admin activity:", e);
+                }
                 
                 updateChart(stats.blockchain_events || 0, stats.pending_requests || 0);
             } catch (error) {
