@@ -1,15 +1,57 @@
-__pycache__/
-*.zip
+# === SECRETS — NEVER COMMIT ===
+.env
+.env.*
+!.env.example
 
-# Runtime secrets — never commit these
+# === PYTHON ===
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.so
+dist/
+build/
+*.egg-info/
+
+# === VIRTUAL ENVIRONMENT ===
+venv/
+.venv/
+env/
+ENV/
+
+# === TESTING ===
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# === EDITOR ===
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# === NODE / JS ===
+node_modules/
+package-lock.json
+
+# === UPLOADS (user data — private) ===
+uploads/
+
+# === DOCKER ===
+# docker-compose.yml is kept but must NOT contain hardcoded secrets
+
+# === ML MODELS (large binary files) ===
+# Crypto-models/models/*.pkl  # Uncomment if you want to exclude model files
+
+# === LEGACY / MIGRATION ARTIFACTS ===
 data/secret_key.bin
 data/users.json
 data/users_backup.json
-
-# Python virtual environment
-venv/
-.env
 *.csv
-.vscode/
-.vscode/
-.vscode/
+*.zip
+
+# === OS ===
+.DS_Store
+Thumbs.db

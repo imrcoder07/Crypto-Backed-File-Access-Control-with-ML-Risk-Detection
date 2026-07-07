@@ -37,10 +37,10 @@ services:
     build: .
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/crypto_access_control
-      - SECRET_KEY=e807dc03921cc879f7e12e09e3c3fd511ac3dec8cba10fb3
+      - SECRET_KEY=${SECRET_KEY}          # Set this in your shell: export SECRET_KEY=...
       - MINIO_ENDPOINT=minio:9000
-      - MINIO_ACCESS_KEY=minioadmin
-      - MINIO_SECRET_KEY=minioadmin
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
       - MINIO_BUCKET_NAME=crypto-uploads
       - MINIO_SECURE=false
     ports:
