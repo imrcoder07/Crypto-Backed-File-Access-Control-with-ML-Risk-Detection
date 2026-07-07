@@ -57,3 +57,10 @@ data/users_backup.json
 Thumbs.db
 
 python train_risk_model.ipynb
+
+# === DEVELOPMENT DOCUMENTATION ===
+# Ignore all markdown files by default
+*.md
+# Explicitly allow the main README.md
+!README.md
+
