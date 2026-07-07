@@ -3098,9 +3098,9 @@
                             <td class="py-4 px-6">
                                 <div class="flex items-center gap-2">
                                     <div class="w-6 h-6 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-[10px] font-bold uppercase">
-                                        ${SecurityUtils.sanitize(request.user[0] || 'U')}
+                                        ${SecurityUtils.sanitize(request.user?.[0] || 'U')}
                                     </div>
-                                    <span class="font-bold text-on-surface">${SecurityUtils.sanitize(request.user)}</span>
+                                    <span class="font-bold text-on-surface">${SecurityUtils.sanitize(request.user || 'Unknown User')}</span>
                                 </div>
                             </td>
                             
