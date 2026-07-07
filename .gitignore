@@ -55,3 +55,5 @@ data/users_backup.json
 # === OS ===
 .DS_Store
 Thumbs.db
+
+python train_risk_model.ipynb
