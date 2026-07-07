@@ -109,8 +109,9 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         html, body {
-            height: 100%;
-            overflow: hidden;
+            min-height: 100%;
+            overflow-x: hidden;
+            overflow-y: auto;
             font-family: 'Inter', sans-serif;
             background-color: #090E17;
             color: #dfe2eb;
@@ -532,9 +533,11 @@
         #landing-view {
             min-height: 100vh;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: flex-start;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
         .landing-content {
@@ -626,7 +629,7 @@
         </header>
 
         <!-- Hero Section -->
-        <main class="relative pt-32 pb-20 px-gutter flex flex-col items-center justify-start text-center w-full relative z-10 flex-1">
+        <main class="relative pt-32 pb-20 px-gutter flex flex-col items-center justify-start text-center w-full relative z-10">
             <div class="max-w-4xl w-full space-y-8 flex flex-col items-center">
                 <!-- Headline -->
                 <div class="space-y-4 flex flex-col items-center">
