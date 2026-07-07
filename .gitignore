@@ -10,3 +10,6 @@ data/users_backup.json
 venv/
 .env
 *.csv
+.vscode/
+.vscode/
+.vscode/
