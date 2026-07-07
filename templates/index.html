@@ -98,6 +98,11 @@
         }
     </script>
     <style>
+        .tech-badge {
+            background: #161B22;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
         /* =============================================
            RESET & BASE
            ============================================= */
@@ -591,81 +596,196 @@
     <canvas id="bg-canvas"></canvas>
 
     <!-- LANDING VIEW -->
-    <div id="landing-view" class="view active">
-        <div class="landing-content max-w-5xl mx-auto px-6 py-12 flex flex-col items-center justify-center min-h-screen text-center relative z-10">
-            <!-- Header Tech Badge -->
-            <div class="mb-4 px-3 py-1 glass-panel border border-primary/20 rounded-full inline-flex items-center gap-2">
-                <span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>
-                <span class="font-data-mono text-[10px] text-secondary tracking-widest">SECURE OPERATIONS PORTAL ACTIVE</span>
+    <div id="landing-view" class="view active flex flex-col w-full min-h-screen overflow-y-auto">
+        <!-- TopAppBar -->
+        <header class="flex justify-between items-center w-full h-14 px-gutter fixed top-0 left-0 right-0 z-50 bg-[#10141a]/80 backdrop-blur-xl border-b border-outline-variant/30">
+            <div class="flex items-center gap-4">
+                <span class="font-display-lg text-display-lg text-primary uppercase tracking-widest text-[18px]">Crypto Access Control</span>
             </div>
-
-            <!-- Hero Section -->
-            <h1 class="font-display-lg text-display-lg text-primary uppercase tracking-widest leading-tight max-w-4xl mb-4">
-                Crypto Access Control
-            </h1>
-            <p class="font-data-mono text-xs md:text-sm text-secondary uppercase tracking-wider mb-6">
-                Intelligent Risk Detector & Immutable Blockchain Ledger
-            </p>
-            <p class="font-body-sm text-on-surface-variant text-base max-w-3xl mb-8 leading-relaxed">
-                A decentralized security gateway featuring tri-model machine learning threat detection, 
-                AES-256-GCM hardware encryption, and an immutable private blockchain audit logging system.
-            </p>
-
-            <!-- Call to Action -->
-            <button id="launch-app-btn" class="btn-primary text-sm px-8 py-3.5 tracking-wider active:scale-95 transition-all mb-16 flex items-center gap-2">
-                <span class="material-symbols-outlined">rocket_launch</span>
-                <span>Launch Security Portal</span>
-            </button>
-
-            <!-- Feature Showcase -->
-            <div class="feature-grid w-full">
-                <!-- Feature 1: AI Risk Analysis -->
-                <div class="feature-card glass-panel p-6 flex flex-col items-center text-center">
-                    <div class="w-12 h-12 flex items-center justify-center bg-primary/10 rounded-xl mb-4 border border-primary/20">
-                        <span class="material-symbols-outlined text-primary text-[24px]">psychology</span>
+            <div class="hidden md:flex items-center gap-6">
+                <nav class="flex gap-4">
+                    <a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-all duration-200 uppercase" href="#">Architecture</a>
+                    <a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-all duration-200 uppercase" href="#">Solutions</a>
+                    <a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-all duration-200 uppercase" href="#">Enterprise</a>
+                </nav>
+                <div class="flex items-center gap-3 ml-4">
+                    <span class="material-symbols-outlined text-on-surface-variant text-[20px] hover:text-primary transition-colors cursor-pointer">notifications</span>
+                    <span class="material-symbols-outlined text-on-surface-variant text-[20px] hover:text-primary transition-colors cursor-pointer">shield</span>
+                    <div class="w-8 h-8 rounded-full tech-badge overflow-hidden flex items-center justify-center bg-primary/10 border border-primary/20">
+                        <span class="material-symbols-outlined text-primary text-sm">person</span>
                     </div>
-                    <h3 class="font-headline-md text-headline-md text-on-surface mb-2">Tri-Model ML Risk Analyzer</h3>
-                    <p class="font-body-sm text-on-surface-variant text-sm leading-relaxed">
-                        Employs a voting classifier (Random Forest, SVM, and Isolation Forest) to dynamically analyze file metadata and flag high-risk transfers.
-                    </p>
-                </div>
-
-                <!-- Feature 2: Immutable Blockchain Ledger -->
-                <div class="feature-card glass-panel p-6 flex flex-col items-center text-center">
-                    <div class="w-12 h-12 flex items-center justify-center bg-secondary/10 rounded-xl mb-4 border border-secondary/20">
-                        <span class="material-symbols-outlined text-secondary text-[24px]">fact_check</span>
-                    </div>
-                    <h3 class="font-headline-md text-headline-md text-on-surface mb-2">Blockchain Audit Trails</h3>
-                    <p class="font-body-sm text-on-surface-variant text-sm leading-relaxed">
-                        Every upload, approval verdict, and decryption event is immutably sealed inside sequential blocks, providing a tamper-proof audit trail.
-                    </p>
-                </div>
-
-                <!-- Feature 3: Cryptographic Shield -->
-                <div class="feature-card glass-panel p-6 flex flex-col items-center text-center">
-                    <div class="w-12 h-12 flex items-center justify-center bg-tertiary/10 rounded-xl mb-4 border border-tertiary/20">
-                        <span class="material-symbols-outlined text-tertiary text-[24px]">shield</span>
-                    </div>
-                    <h3 class="font-headline-md text-headline-md text-on-surface mb-2">End-to-End Cryptography</h3>
-                    <p class="font-body-sm text-on-surface-variant text-sm leading-relaxed">
-                        Protects data at-rest using industrial AES-256 encryption. Decryption keys are tightly controlled and require administrative release.
-                    </p>
                 </div>
             </div>
+        </header>
 
-            <!-- Technology Badges -->
-            <div class="mt-16 w-full max-w-3xl">
-                <p class="font-label-caps text-label-caps text-outline mb-6">INTEGRATION FRAMEWORKS</p>
-                <div class="flex flex-wrap justify-center gap-3">
-                    <span class="px-3 py-1.5 bg-surface-container/30 border border-outline-variant/30 text-on-surface-variant font-data-mono text-[10px] rounded uppercase tracking-wider">Flask / Python</span>
-                    <span class="px-3 py-1.5 bg-surface-container/30 border border-outline-variant/30 text-on-surface-variant font-data-mono text-[10px] rounded uppercase tracking-wider">PostgreSQL DB</span>
-                    <span class="px-3 py-1.5 bg-surface-container/30 border border-outline-variant/30 text-on-surface-variant font-data-mono text-[10px] rounded uppercase tracking-wider">Celery Async</span>
-                    <span class="px-3 py-1.5 bg-surface-container/30 border border-outline-variant/30 text-on-surface-variant font-data-mono text-[10px] rounded uppercase tracking-wider">Redis Broker</span>
-                    <span class="px-3 py-1.5 bg-surface-container/30 border border-outline-variant/30 text-on-surface-variant font-data-mono text-[10px] rounded uppercase tracking-wider">Scikit-Learn ML</span>
-                    <span class="px-3 py-1.5 bg-surface-container/30 border border-outline-variant/30 text-on-surface-variant font-data-mono text-[10px] rounded uppercase tracking-wider">Tailwind Config</span>
+        <!-- Hero Section -->
+        <main class="relative pt-32 pb-20 px-gutter flex flex-col items-center justify-center text-center w-full relative z-10 flex-1">
+            <div class="max-w-4xl w-full space-y-8 flex flex-col items-center">
+                <!-- Headline -->
+                <div class="space-y-4 flex flex-col items-center">
+                    <span class="tech-badge px-3 py-1 rounded-full font-data-mono text-data-mono text-primary border border-primary/20 inline-block uppercase">
+                        [ SYSTEMS ONLINE: VERIFIED ]
+                    </span>
+                    <h1 class="font-display-lg text-[42px] md:text-[64px] leading-tight tracking-tight text-on-surface uppercase max-w-4xl">
+                        Secure Access. <span class="text-primary">ML Risk Detection.</span><br/>
+                        Cryptographic Audit.
+                    </h1>
+                    <p class="font-body-sm text-on-surface-variant max-w-2xl mx-auto text-base md:text-lg opacity-80 leading-relaxed">
+                        The next-generation framework for managing high-stakes cryptographic environments. Precision-engineered for technical ops centers requiring absolute systematic reliability.
+                    </p>
+                </div>
+                <!-- CTA -->
+                <div class="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
+                    <button id="launch-app-btn" class="bg-primary text-on-primary px-8 py-3 rounded font-headline-md text-headline-md flex items-center gap-2 hover:opacity-90 transition-all active:scale-95 cursor-pointer">
+                        <span>Launch Security Portal</span>
+                        <span class="material-symbols-outlined">arrow_forward</span>
+                    </button>
+                    <button onclick="window.open('/api/health')" class="border border-primary text-primary px-8 py-3 rounded font-headline-md text-headline-md hover:bg-primary/10 transition-all active:scale-95 cursor-pointer bg-transparent">
+                        System Health Check
+                    </button>
+                </div>
+                <!-- Preview Card (Glassmorphism) -->
+                <div class="mt-20 w-full max-w-3xl mx-auto glass-panel rounded-xl overflow-hidden shadow-2xl relative text-left">
+                    <div class="h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
+                    <div class="p-4 border-b border-white/10 flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <div class="flex gap-1">
+                                <div class="w-2.5 h-2.5 rounded-full bg-error/40"></div>
+                                <div class="w-2.5 h-2.5 rounded-full bg-secondary/40"></div>
+                                <div class="w-2.5 h-2.5 rounded-full bg-primary/40"></div>
+                            </div>
+                            <span class="font-data-mono text-data-mono text-on-surface-variant opacity-60 ml-4">CRYPTO_VAULT_DASHBOARD_V2.4</span>
+                        </div>
+                        <span class="font-data-mono text-data-mono text-primary">LIVE_METRICS</span>
+                    </div>
+                    <!-- Sample Table -->
+                    <div class="table-container p-0 border-none rounded-none">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-white/05 border-b border-white/05">
+                                <tr class="font-label-caps text-label-caps text-on-surface-variant uppercase text-[10px]">
+                                    <th class="p-4">Resource</th>
+                                    <th class="p-4">Status</th>
+                                    <th class="p-4">Risk Score</th>
+                                    <th class="p-4 text-right">Access Hash</th>
+                                </tr>
+                            </thead>
+                            <tbody class="font-data-mono text-data-mono text-xs">
+                                <tr class="border-b border-white/05 hover:bg-white/05 transition-colors">
+                                    <td class="p-4 flex items-center gap-3">
+                                        <span class="material-symbols-outlined text-primary text-sm">folder_open</span>
+                                        <span>root_ledger.enc</span>
+                                    </td>
+                                    <td class="p-4">
+                                        <span class="bg-secondary-container/20 text-secondary px-2 py-0.5 rounded text-[10px] border border-secondary/20">VERIFIED</span>
+                                    </td>
+                                    <td class="p-4 text-secondary">0.02</td>
+                                    <td class="p-4 text-right text-on-surface-variant opacity-40">0x7a2...4f</td>
+                                </tr>
+                                <tr class="border-b border-white/05 hover:bg-white/05 transition-colors">
+                                    <td class="p-4 flex items-center gap-3">
+                                        <span class="material-symbols-outlined text-primary text-sm">lock_person</span>
+                                        <span>private_keys.pem</span>
+                                    </td>
+                                    <td class="p-4">
+                                        <span class="bg-secondary-container/20 text-secondary px-2 py-0.5 rounded text-[10px] border border-secondary/20">ENCRYPTED</span>
+                                    </td>
+                                    <td class="p-4 text-secondary">0.00</td>
+                                    <td class="p-4 text-right text-on-surface-variant opacity-40">0x1b4...2a</td>
+                                </tr>
+                                <tr class="hover:bg-white/05 transition-colors">
+                                    <td class="p-4 flex items-center gap-3">
+                                        <span class="material-symbols-outlined text-error text-sm">warning</span>
+                                        <span>audit_logs_05.gz</span>
+                                    </td>
+                                    <td class="p-4">
+                                        <span class="bg-error-container/20 text-error px-2 py-0.5 rounded text-[10px] border border-error/20">SCANNING</span>
+                                    </td>
+                                    <td class="p-4 text-error">0.87</td>
+                                    <td class="p-4 text-right text-on-surface-variant opacity-40">0xdd2...e1</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
+        </main>
+
+        <!-- Tech Stack Section -->
+        <section class="py-20 bg-surface-container-lowest/50 border-y border-white/05 w-full relative z-10">
+            <div class="max-w-6xl mx-auto px-gutter text-center">
+                <h2 class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-10 tracking-[0.2em]">Built with modern infrastructure</h2>
+                <div class="flex flex-wrap justify-center gap-6 md:gap-12 opacity-80 transition-all">
+                    <div class="flex items-center gap-2 tech-badge px-4 py-2 rounded">
+                        <span class="material-symbols-outlined text-primary">cloud_done</span>
+                        <span class="font-data-mono text-data-mono">Render</span>
+                    </div>
+                    <div class="flex items-center gap-2 tech-badge px-4 py-2 rounded">
+                        <span class="material-symbols-outlined text-primary">database</span>
+                        <span class="font-data-mono text-data-mono">PostgreSQL</span>
+                    </div>
+                    <div class="flex items-center gap-2 tech-badge px-4 py-2 rounded">
+                        <span class="material-symbols-outlined text-primary">schedule</span>
+                        <span class="font-data-mono text-data-mono">Celery</span>
+                    </div>
+                    <div class="flex items-center gap-2 tech-badge px-4 py-2 rounded">
+                        <span class="material-symbols-outlined text-primary">memory</span>
+                        <span class="font-data-mono text-data-mono">Redis</span>
+                    </div>
+                    <div class="flex items-center gap-2 tech-badge px-4 py-2 rounded">
+                        <span class="material-symbols-outlined text-primary">psychology</span>
+                        <span class="font-data-mono text-data-mono">scikit-learn</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Grid Layout Features -->
+        <section class="py-24 px-gutter max-w-7xl mx-auto w-full relative z-10">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Feature 1 -->
+                <div class="glass-panel p-8 rounded-xl flex flex-col gap-4 group text-left">
+                    <div class="w-12 h-12 rounded bg-primary/10 flex items-center justify-center text-primary border border-primary/20 group-hover:bg-primary group-hover:text-black transition-all">
+                        <span class="material-symbols-outlined">security</span>
+                    </div>
+                    <h3 class="font-headline-md text-headline-md text-on-surface">Cryptographic Integrity</h3>
+                    <p class="text-on-surface-variant opacity-70 font-body-sm leading-relaxed">Automated SHA-256 verification for every access attempt, ensuring no block goes unmonitored.</p>
+                </div>
+                <!-- Feature 2 -->
+                <div class="glass-panel p-8 rounded-xl flex flex-col gap-4 group text-left">
+                    <div class="w-12 h-12 rounded bg-primary/10 flex items-center justify-center text-primary border border-primary/20 group-hover:bg-primary group-hover:text-black transition-all">
+                        <span class="material-symbols-outlined">analytics</span>
+                    </div>
+                    <h3 class="font-headline-md text-headline-md text-on-surface">ML-Driven Heuristics</h3>
+                    <p class="text-on-surface-variant opacity-70 font-body-sm leading-relaxed">Real-time risk scoring using scikit-learn models trained on over 500M authentication vectors.</p>
+                </div>
+                <!-- Feature 3 -->
+                <div class="glass-panel p-8 rounded-xl flex flex-col gap-4 group text-left">
+                    <div class="w-12 h-12 rounded bg-primary/10 flex items-center justify-center text-primary border border-primary/20 group-hover:bg-primary group-hover:text-black transition-all">
+                        <span class="material-symbols-outlined">history_edu</span>
+                    </div>
+                    <h3 class="font-headline-md text-headline-md text-on-surface">Immutable Audit Trail</h3>
+                    <p class="text-on-surface-variant opacity-70 font-body-sm leading-relaxed">Compliance-ready logs with sub-millisecond timestamping and distributed redundancy.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="py-12 px-gutter border-t border-white/05 bg-surface-container-lowest w-full relative z-10">
+            <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8 text-left">
+                <div class="flex flex-col gap-2">
+                    <span class="font-display-lg text-[20px] text-primary uppercase tracking-widest leading-none">Crypto Access Control</span>
+                    <span class="font-data-mono text-data-mono text-on-surface-variant opacity-40">OPS_CENTER_RELEASE_v2.4.88_STABLE</span>
+                </div>
+                <div class="flex gap-8">
+                    <a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary uppercase" href="#">Security Policy</a>
+                    <a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary uppercase" href="#">Status</a>
+                    <a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary uppercase" href="#">API Docs</a>
+                </div>
+                <div class="text-on-surface-variant opacity-40 font-data-mono text-data-mono">
+                    © 2024 CRPT_CTRL_LTD. ALL_RIGHTS_RESERVED.
+                </div>
+            </div>
+        </footer>
     </div>
 
     <!-- LOGIN VIEW -->
