@@ -15,6 +15,7 @@ from contextlib import contextmanager
 import psycopg2
 import psycopg2.extras
 from psycopg2.pool import ThreadedConnectionPool
+from psycopg2 import InterfaceError, OperationalError
 
 # ── Connection pool ──────────────────────────────────────────────────────────
 
@@ -30,7 +31,7 @@ def _get_pool() -> ThreadedConnectionPool:
             raise RuntimeError(
                 "DATABASE_URL is not set. Add it to your .env file."
             )
-        _pool = ThreadedConnectionPool(minconn=1, maxconn=10, dsn=DATABASE_URL)
+        _pool = ThreadedConnectionPool(minconn=1, maxconn=10, dsn=DATABASE_URL, keepalives=1, keepalives_idle=30, keepalives_interval=10, keepalives_count=5, connect_timeout=10)
     return _pool
 
 
@@ -39,14 +40,32 @@ def get_db():
     """Yield a pooled connection; commit on success, rollback on error."""
     pool = _get_pool()
     conn = pool.getconn()
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1;")  # Test connection
+    except (InterfaceError, OperationalError):
+        pool.putconn(conn, close=True)  # Close and remove bad connection
+        conn = pool.getconn()  # Get a new connection
     try:
         yield conn
         conn.commit()
     except Exception:
-        conn.rollback()
+        try:
+            if conn and not conn.closed:
+                conn.rollback()
+        except (InterfaceError, OperationalError):
+            pass
         raise
+
     finally:
-        pool.putconn(conn)
+        try:
+            if conn.closed:
+                pool.putconn(conn, close=True)
+            else:
+                pool.putconn(conn)
+        except Exception:
+            pass
 
 
 import subprocess
