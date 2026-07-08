@@ -148,7 +148,7 @@ def approve_request():
     if not is_admin():
         return jsonify({'message': 'Unauthorized'}), 401
         
-    data = request.json
+    data = request.get_json(silent=True) or {}
     request_id = data.get('request_id')
     notes = data.get('notes', '')
     admin_user = session['username']
@@ -174,7 +174,7 @@ def reject_request():
     if not is_admin():
         return jsonify({'message': 'Unauthorized'}), 401
         
-    data = request.json
+    data = request.get_json(silent=True) or {}
     request_id = data.get('request_id')
     notes = data.get('notes', '')
     admin_user = session['username']

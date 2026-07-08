@@ -18,15 +18,37 @@ def index():
 
 @main_bp.route('/api/dashboard_data')
 def get_dashboard_data():
+    from flask import session
+    from modules import db
     req_details = all_requests_ml_details()
     avg_risk = sum(r.get('risk_score', 0) for r in req_details) / len(req_details) if req_details else 0.0
     
+    username = session.get('username')
+    user_activity = []
+    if username:
+        try:
+            activities = db.get_user_activity(username, count=10)
+            for act in activities:
+                ts = act.get('ts')
+                # Format timestamp
+                ts_str = ts.strftime('%Y-%m-%d %H:%M:%S') if hasattr(ts, 'strftime') else str(ts)
+                # Parse activity details
+                act_type = str(act.get('activity', '')).upper()
+                details = act.get('details', '')
+                details_str = f": {details}" if details else ""
+                user_activity.append(f"[{ts_str}] {act_type}{details_str}")
+        except Exception as e:
+            # Fallback for transient errors
+            user_activity = [f"Error loading logs: {str(e)}"]
+
     return jsonify({
         'pending_requests': pending_count(),
         'approved_files': approved_count(),
         'avg_risk': round(avg_risk, 2),
-        'chain_length': audit_ledger.chain_length
+        'chain_length': audit_ledger.chain_length,
+        'user_activity': user_activity
     })
+
 
 @main_bp.route('/api/system_stats')
 def get_system_stats():

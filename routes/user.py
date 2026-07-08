@@ -221,8 +221,8 @@ def download_approved_file(file_id):
     if 'username' not in session:
         return jsonify({'message': 'Unauthorized'}), 401
         
-    username = session['username']
-    password = request.json.get('password')
+    data = request.get_json(silent=True) or {}
+    password = data.get('password')
     
     if not password:
         return jsonify({'message': 'Decryption password is required'}), 400
