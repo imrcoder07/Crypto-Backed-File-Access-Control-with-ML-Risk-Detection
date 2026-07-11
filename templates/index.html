@@ -2421,6 +2421,84 @@
             }
         });
         
+        // =============================================
+        // FILE UPLOAD & ENCRYPTION
+        // =============================================
+        document.getElementById('upload-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fileInput = document.getElementById('file-input');
+            const passwordInput = document.getElementById('crypto-password');
+            
+            if (!fileInput.files.length) {
+                showMessage('user-message-area', '⚠️ Please select a file to upload.', 'message-warning');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const password = passwordInput.value;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('password', password);
+            
+            try {
+                setLoading('#upload-btn', true);
+                showMessage('user-message-area', '🔐 Encrypting and uploading file...', 'message-info');
+                
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    if (result.async) {
+                        const reqId = result.request_id;
+                        showMessage('user-message-area', '🔑 File encrypted & uploaded. Running Celery risk scan...', 'message-info');
+                        
+                        // Poll request status
+                        const pollInterval = setInterval(async () => {
+                            try {
+                                const pollRes = await fetch(`/api/request_status/${reqId}`);
+                                if (pollRes.ok) {
+                                    const pollData = await pollRes.json();
+                                    if (pollData.status === 'SUCCESS') {
+                                        clearInterval(pollInterval);
+                                        showMessage('user-message-area', '✅ Upload complete. Access request pending admin approval.', 'message-success');
+                                        // Reset fields
+                                        fileInput.value = '';
+                                        passwordInput.value = '';
+                                        document.getElementById('dropzone-text').textContent = 'Drop Files Here or Click to Scan';
+                                        await loadUserFiles();
+                                        await loadUserRequests();
+                                    } else if (pollData.status === 'FAILURE') {
+                                        clearInterval(pollInterval);
+                                        showMessage('user-message-area', `❌ Anomaly scan failed: ${SecurityUtils.sanitize(pollData.message || 'Verification rejected')}`, 'message-error');
+                                    }
+                                }
+                            } catch (err) {
+                                console.error('Polling error:', err);
+                            }
+                        }, 2000);
+                    } else {
+                        showMessage('user-message-area', '✅ File encrypted and uploaded successfully!', 'message-success');
+                        fileInput.value = '';
+                        passwordInput.value = '';
+                        document.getElementById('dropzone-text').textContent = 'Drop Files Here or Click to Scan';
+                        await loadUserFiles();
+                        await loadUserRequests();
+                    }
+                } else {
+                    showMessage('user-message-area', 'Error: ' + SecurityUtils.sanitize(result.message), 'message-error');
+                }
+            } catch (error) {
+                showMessage('user-message-area', 'Error: Network error during upload.', 'message-error');
+            } finally {
+                setLoading('#upload-btn', false);
+            }
+        });
+        
         function logout() { 
             cleanupAllIntervals();
             fetch('/api/logout').then(() => {
