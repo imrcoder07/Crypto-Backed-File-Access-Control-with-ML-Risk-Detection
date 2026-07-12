@@ -613,6 +613,20 @@ crypto-access-control/
     └── test_integration.py    # Full integration test suite
 ```
 
+## 🆕 Recent Updates & Quality Assurance
+
+The system underwent a comprehensive security hardening, frontend restoration, and quality assurance review. The following features were added, verified, and integrated:
+
+### 1. Frontend File Upload & Status Polling
+- **Integrated Submit Listener:** Restored the `#upload-form` submit handler in the user dashboard. Users can now select files, set passwords, and trigger uploads without experiencing interface hangs.
+- **Dynamic Celery Status Polling:** Fully connected the frontend to `/api/request_status/<request_id>` to poll risk assessment progress every 2 seconds with clear status alerts (`QUEUED → PROCESSING → SUCCESS/FAILURE`).
+- **Complete Test Coverage:** Verified integration and async upload pathways using the pytest suite, passing all 10 integration and unit tests.
+
+### 2. B.Tech Thesis Formatting & Quality Assurance Review
+- **Standardized Margins for Printing:** Configured all thesis sections with standard margins (Left = 1.25" for binding clearance, Right/Top/Bottom = 1.0") in `CRYPTO thesis final year_Final_Reviewed.docx`.
+- **Spelling & Terminology Audit:** Audited and corrected 17 occurrences of the spelling typo `Isolation Forestst` to `Isolation Forest`, corrected `ASANSOL ENGINEERING COLLAGE` to `ASANSOL ENGINEERING COLLEGE`, and aligned figure captions with their respective list indices.
+- **Dynamic Field Refresh:** Embedded the `w:updateFields` Word settings property to prompt automatic index and page-number refreshes on startup.
+
 ---
 
 ## 🔮 Future Enhancements
