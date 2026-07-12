@@ -320,6 +320,7 @@ def create_request(request_id: str, username: str, file_id: str, filename: str,
     file_size_mb = file_info.get('file_size_mb') or 0.0
     verdict = (
         ml_details.get('verdict')
+        or ml_details.get('final_verdict')
         or ml_details.get('risk_level')
         or ml_details.get('classification')
         or 'review'

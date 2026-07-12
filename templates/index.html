@@ -3270,21 +3270,22 @@
                 requests.forEach(request => {
                     const mlDetails = request.ml_details || {};
                     const modelPredictions = mlDetails.model_predictions || {};
-                    const fileSizeMB = request.file_size_mb || (request.file_size / (1024 * 1024)).toFixed(2);
-                    
-                    const isAllow = (mlDetails.final_verdict || 'Allow').toLowerCase() === 'allow';
-                    const verdictColor = isAllow ? 'text-secondary' : 'text-error';
+                         const riskVal = mlDetails.risk_score !== undefined ? mlDetails.risk_score : 0.0;
+                    const threshold = 0.75;
                     
                     let riskText = 'LOW RISK';
                     let riskColor = 'status-approved';
-                    const riskVal = mlDetails.risk_score !== undefined ? mlDetails.risk_score : 0.0;
-                    if (riskVal > 0.7) {
+                    if (riskVal >= threshold) {
                         riskText = 'HIGH RISK';
                         riskColor = 'status-rejected';
                     } else if (riskVal > 0.3) {
                         riskText = 'MEDIUM RISK';
                         riskColor = 'status-pending';
                     }
+                    
+                    const displayVerdict = mlDetails.final_verdict || (riskVal >= threshold ? 'Deny' : 'Allow');
+                    const isAllow = displayVerdict.toLowerCase() === 'allow';
+                    const verdictColor = isAllow ? 'text-secondary' : 'text-error';
                     
                     const timeAgoStr = request.time_ago || (request.upload_time ? SecurityUtils.sanitize(request.upload_time) : 'Recently');
 
@@ -3301,7 +3302,7 @@
                             
                             <td class="py-4 px-6">
                                 <div class="font-bold text-on-surface">${SecurityUtils.sanitize(request.filename)}</div>
-                                <div class="text-[10px] text-on-surface-variant/60 uppercase mt-0.5">${fileSizeMB} MB</div>
+                                  <div class="text-[10px] text-on-surface-variant/60 uppercase mt-0.5">${fileSizeMB} MB</div>
                             </td>
                             
                             <td class="py-4 px-6">
@@ -3310,7 +3311,7 @@
                             
                             <td class="py-4 px-6">
                                 <div class="flex items-center gap-2">
-                                    <span class="font-bold uppercase ${verdictColor}">${SecurityUtils.sanitize(mlDetails.final_verdict || 'Allow')}</span>
+                                    <span class="font-bold uppercase ${verdictColor}">${SecurityUtils.sanitize(displayVerdict)}</span>
                                     <span class="status-badge ${riskColor} text-[8px] px-1 py-0.5">${riskText}</span>
                                 </div>
                             </td>
@@ -3706,15 +3707,31 @@
             const titleEl = document.getElementById('ml-panel-title');
             if (titleEl) titleEl.textContent = `ML Analysis: ${SecurityUtils.sanitize(req.username)}`;
             
-            const risk = req.ml_details?.risk_score !== undefined ? req.ml_details.risk_score : 0.0;
-            const riskEl = document.getElementById('ml-panel-risk');
-            if (riskEl) riskEl.textContent = risk.toFixed(2);
+            const hasML = req.ml_details && Object.keys(req.ml_details).length > 0;
+            const threshold = 0.75;
             
-            const verdict = (req.ml_details?.final_verdict || 'Allow').toUpperCase();
+            let riskVal = 0.0;
+            const riskEl = document.getElementById('ml-panel-risk');
+            if (riskEl) {
+                if (hasML && req.ml_details.risk_score !== undefined) {
+                    riskVal = req.ml_details.risk_score;
+                    riskEl.textContent = riskVal.toFixed(2);
+                } else {
+                    riskEl.textContent = 'N/A';
+                }
+            }
+            
             const verdictEl = document.getElementById('ml-panel-verdict');
             if (verdictEl) {
-                verdictEl.textContent = verdict;
-                verdictEl.className = `font-data-mono text-xs font-bold ${verdict === 'ALLOW' ? 'text-secondary' : 'text-error'} mt-2 uppercase`;
+                if (hasML) {
+                    const rawVerdict = req.ml_details.final_verdict || (riskVal >= threshold ? 'Deny' : 'Allow');
+                    const verdict = rawVerdict.toUpperCase();
+                    verdictEl.textContent = verdict;
+                    verdictEl.className = `font-data-mono text-xs font-bold ${verdict === 'ALLOW' ? 'text-secondary' : 'text-error'} mt-2 uppercase`;
+                } else {
+                    verdictEl.textContent = 'UNAVAILABLE';
+                    verdictEl.className = 'font-data-mono text-xs font-bold text-outline mt-2 uppercase';
+                }
             }
             
             let hour = 'N/A';
@@ -3737,7 +3754,7 @@
             const locEl = document.getElementById('ml-panel-location');
             if (locEl) locEl.textContent = `${locDev} KM`;
             
-            const ipRep = risk > 0.7 ? 'HIGH RISK' : 'SAFE';
+            const ipRep = hasML ? (riskVal >= threshold ? 'HIGH RISK' : 'SAFE') : 'N/A';
             const ipEl = document.getElementById('ml-panel-ip');
             if (ipEl) {
                 ipEl.textContent = ipRep;
@@ -3748,14 +3765,31 @@
             const recEl = document.getElementById('ml-panel-recurrence');
             if (recEl) recEl.textContent = recurrence;
             
-            const confidence = parseFloat(req.ml_details?.confidence) || 85.0;
             const confTextEl = document.getElementById('ml-panel-confidence-text');
-            if (confTextEl) confTextEl.textContent = `${confidence.toFixed(1)}%`;
-            
             const confBar = document.getElementById('ml-panel-confidence-bar');
-            if (confBar) {
-                confBar.style.width = `${confidence}%`;
-                confBar.className = `confidence-level ${risk > 0.7 ? 'bg-error' : 'bg-secondary'}`;
+            
+            if (hasML && req.ml_details.confidence !== undefined) {
+                let confidence = parseFloat(req.ml_details.confidence);
+                if (isNaN(confidence)) confidence = 0.0;
+                
+                // Robust scale normalization
+                if (confidence >= 0.0 && confidence <= 1.0) {
+                    confidence = confidence * 100.0;
+                }
+                // Clamp strictly to [0.0, 100.0]
+                confidence = Math.max(0.0, Math.min(100.0, confidence));
+                
+                if (confTextEl) confTextEl.textContent = `${confidence.toFixed(1)}%`;
+                if (confBar) {
+                    confBar.style.width = `${confidence}%`;
+                    confBar.className = `confidence-level ${riskVal >= threshold ? 'bg-error' : 'bg-secondary'}`;
+                }
+            } else {
+                if (confTextEl) confTextEl.textContent = 'Unavailable';
+                if (confBar) {
+                    confBar.style.width = '0%';
+                    confBar.className = 'confidence-level bg-outline';
+                }
             }
         }
 

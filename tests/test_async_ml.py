@@ -222,3 +222,24 @@ def test_upload_version_update_file(mock_upload, logged_in_client):
     assert 'warnings' in req['ml_details']
     assert any("Tamper Check" in w for w in req['ml_details']['warnings'])
 
+def test_final_verdict_logic():
+    from modules.extensions import ml_analyzer
+    # Run a test inference
+    features = {
+        'hour_of_day': 12,
+        'day_of_week': 1,
+        'is_weekend': 0,
+        'avg_actions_per_day': 10.0,
+        'activity': 'File Copy',
+        'role': 'SoftwareEngineer'
+    }
+    results = ml_analyzer.analyze_risk(features)
+    assert 'final_verdict' in results
+    assert results['final_verdict'] in ['Allow', 'Deny']
+    assert 'model_predictions' in results
+    
+    # Assert DB helper matches
+    assert ml_analyzer._get_verdict(0.80) == 'Deny'
+    assert ml_analyzer._get_verdict(0.20) == 'Allow'
+
+

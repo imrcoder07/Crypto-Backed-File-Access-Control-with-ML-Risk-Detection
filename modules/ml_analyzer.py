@@ -23,6 +23,7 @@ class MLRiskAnalyzer:
     Run ``python Crypto-models/generate_model_hashes.py`` once after training
     to produce Crypto-models/model_hashes.json and enable hash verification.
     """
+    HIGH_RISK_THRESHOLD = 0.75
 
     def __init__(self):
         self.models_loaded = False
@@ -32,6 +33,10 @@ class MLRiskAnalyzer:
         self.security_alerts = []
         self._expected_hashes = self._load_expected_hashes()
         self.load_models()
+
+    def _get_verdict(self, risk_score: float) -> str:
+        """Centralized helper to convert a risk score to a final verdict string."""
+        return "Deny" if risk_score >= self.HIGH_RISK_THRESHOLD else "Allow"
 
     def _load_expected_hashes(self) -> dict:
         """Load expected model hashes from Crypto-models/model_hashes.json.
@@ -146,10 +151,13 @@ class MLRiskAnalyzer:
         if not self.models_loaded:
             logger.warning("ML models not loaded — returning mock risk score.")
             mock_score = round(random.uniform(0.1, 0.4), 2)
+            is_risky = mock_score >= self.HIGH_RISK_THRESHOLD
             return {
                 'risk_score': mock_score,
-                'is_risky': mock_score > 0.75,
+                'is_risky': is_risky,
                 'confidence': 0.85,
+                'final_verdict': self._get_verdict(mock_score),
+                'model_predictions': {},
                 'factors': ['Mock ML Engine Active'],
                 'ml_status': 'MOCK MODE'
             }
@@ -179,12 +187,19 @@ class MLRiskAnalyzer:
             if iso_pred == -1:
                 ensemble_risk = min(1.0, ensemble_risk + 0.3)
 
-            is_risky = ensemble_risk > 0.75
+            is_risky = ensemble_risk >= self.HIGH_RISK_THRESHOLD
+            rounded_risk = round(float(ensemble_risk), 2)
 
             return {
-                'risk_score': round(float(ensemble_risk), 2),
+                'risk_score': rounded_risk,
                 'is_risky': bool(is_risky),
                 'confidence': 0.92,
+                'final_verdict': self._get_verdict(rounded_risk),
+                'model_predictions': {
+                    'random_forest_score': round(float(rf_pred), 4),
+                    'svm_score': round(float(svm_pred), 4),
+                    'isolation_forest_anomaly': int(iso_pred == -1)
+                },
                 'factors': ['Ensemble Prediction', 'Isolation Forest checked'],
                 'ml_status': 'Active'
             }
@@ -195,6 +210,8 @@ class MLRiskAnalyzer:
                 'risk_score': 0.99,
                 'is_risky': True,
                 'confidence': 0.0,
+                'final_verdict': 'Deny',
+                'model_predictions': {},
                 'factors': [f'Analysis Error: {str(e)}'],
                 'ml_status': 'Error'
             }
