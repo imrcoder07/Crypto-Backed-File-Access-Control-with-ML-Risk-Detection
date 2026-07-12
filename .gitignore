@@ -64,3 +64,8 @@ python train_risk_model.ipynb
 # Explicitly allow the main README.md
 !README.md
 
+# === THESIS DOCUMENTS ===
+*.docx
+*.pdf
+
+
