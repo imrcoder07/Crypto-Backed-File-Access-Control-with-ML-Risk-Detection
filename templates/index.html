@@ -3308,6 +3308,7 @@
                     const verdictColor = isAllow ? 'text-secondary' : 'text-error';
                     
                     const timeAgoStr = request.time_ago || (request.upload_time ? SecurityUtils.sanitize(request.upload_time) : 'Recently');
+                    const fileSizeMB = request.file_size_mb || (request.file_size / (1024 * 1024)).toFixed(2);
 
                     html += `
                         <tr class="hover:bg-white/02 transition-colors border-b border-white/05 font-data-mono text-xs">
