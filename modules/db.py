@@ -23,6 +23,15 @@ DATABASE_URL: str = os.environ.get("DATABASE_URL", "")
 
 _pool: ThreadedConnectionPool | None = None
 
+# ── Status and Storage Constants ──────────────────────────────────────────────
+STATUS_APPROVED = "approved"
+STATUS_REJECTED = "rejected"
+STATUS_PENDING = "pending"
+STORAGE_STATUS_STORED = "Stored"
+STORAGE_STATUS_DELETED = "Deleted"
+STORAGE_STATUS_MISSING = "Missing"
+
+
 
 def _get_pool() -> ThreadedConnectionPool:
     global _pool
@@ -607,6 +616,95 @@ def cleanup_old_requests() -> int:
     return removed
 
 
+def get_rejected_requests() -> list:
+    """Retrieve all requests with rejected status, sorted by rejection time."""
+    sql = ("SELECT * FROM requests WHERE status = %s "
+           "ORDER BY rejected_at DESC NULLS LAST;")
+    with get_db() as conn:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(sql, (STATUS_REJECTED,))
+            rows = cur.fetchall()
+    return [_deserialize_request(dict(r)) for r in rows]
+
+
+def delete_encrypted_file(request_id: str, deleted_by: str) -> tuple[bool, str]:
+    """Permanently deletes the encrypted file associated with request_id from storage,
+    updating the storage status in the database requests table while keeping the request history.
+    """
+    with get_db() as conn:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            # 1. Row locking to prevent concurrent deletions
+            cur.execute("SELECT * FROM requests WHERE request_id = %s FOR UPDATE;", (request_id,))
+            req = cur.fetchone()
+            if not req:
+                return False, "Request not found"
+                
+            req = dict(req)
+            
+            # 2. Check if request status is completed
+            if req.get('status') not in (STATUS_APPROVED, STATUS_REJECTED):
+                return False, "Request is not in a completed state (must be Approved or Denied)"
+                
+            # 3. Check if already deleted
+            if req.get('file_deleted'):
+                return True, "Already deleted"
+                
+            # 4. Query files table for path
+            file_id = req.get('file_id')
+            if not file_id:
+                return False, "File ID missing from request"
+                
+            cur.execute("SELECT path FROM files WHERE file_id = %s;", (file_id,))
+            file_row = cur.fetchone()
+            if not file_row:
+                return False, "File metadata not found in database"
+                
+            save_path = dict(file_row).get('path')
+            if not save_path:
+                return False, "File path missing from metadata"
+                
+            # 5. Check if file physically exists in storage first (Storage Inconsistency check)
+            local_exists = False
+            if save_path.startswith("uploads") or "/" in save_path or "\\" in save_path:
+                local_exists = os.path.exists(save_path)
+            
+            s3_exists = False
+            if not local_exists and save_path != "Deleted":
+                try:
+                    from modules.storage_utils import storage_service
+                    storage_service.s3_client.head_object(Bucket=storage_service.bucket_name, Key=save_path)
+                    s3_exists = True
+                except Exception:
+                    pass
+                    
+            if not local_exists and not s3_exists:
+                # Storage inconsistency detected: file missing from storage while file_deleted is FALSE
+                cur.execute(
+                    "UPDATE requests SET storage_status = %s WHERE request_id = %s;",
+                    (STORAGE_STATUS_MISSING, request_id)
+                )
+                return False, "Missing from storage"
+                
+            # 6. Physical deletion
+            from modules.storage_utils import storage_service
+            deleted = storage_service.delete_file(save_path)
+            if not deleted:
+                raise RuntimeError("Failed to physically delete encrypted file from storage.")
+                
+            # 7. Update requests table status
+            sql_update = """
+                UPDATE requests
+                SET file_deleted = TRUE,
+                    deleted_at = NOW(),
+                    deleted_by = %s,
+                    storage_status = %s
+                WHERE request_id = %s;
+            """
+            cur.execute(sql_update, (deleted_by, STORAGE_STATUS_DELETED, request_id))
+            
+            return True, "Deleted successfully"
+
+
 # ── Internal helpers ──────────────────────────────────────────────────────────
 
 def _deserialize_request(row: dict) -> dict:
@@ -619,7 +717,7 @@ def _deserialize_request(row: dict) -> dict:
     elif row.get('ml_details') is None:
         row['ml_details'] = {}
 
-    for key in ('upload_time', 'approved_at', 'rejected_at'):
+    for key in ('upload_time', 'approved_at', 'rejected_at', 'deleted_at'):
         if isinstance(row.get(key), datetime.datetime):
             row[key] = row[key].isoformat()
 

@@ -89,7 +89,7 @@ class TamperEvidentLedger:
                 block['index'], block['timestamp'], block['data'], 
                 block['proof'], block['previous_hash'], block['block_hash']
             )
-            print(f"🔗 Audit Ledger Block #{block['index']} persisted to DB: {data[:100]}")
+            print(f"[AUDIT] Audit Ledger Block #{block['index']} persisted to DB: {data[:100]}")
 
     def _worker(self) -> None:
         """Daemon thread: drains the event queue and persists blocks."""

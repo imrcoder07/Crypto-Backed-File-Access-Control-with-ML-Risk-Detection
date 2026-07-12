@@ -1,5 +1,6 @@
 import os
 import io
+import json
 import logging
 import datetime
 from flask import Blueprint, request, jsonify, session, send_file
@@ -119,6 +120,14 @@ def admin_download_file(file_id):
     if not file_info:
         return jsonify({'message': 'File not found'}), 404
 
+    # Prevent download if file is deleted
+    with db.get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT file_deleted FROM requests WHERE file_id = %s;", (file_id,))
+            row = cur.fetchone()
+            if row and row[0]:
+                return jsonify({'message': 'File has been permanently deleted from storage.'}), 410
+
     admin_user = session['username']
     object_path = file_info.get('path', '')
 
@@ -194,3 +203,65 @@ def reject_request():
         return jsonify({'message': 'Request rejected successfully'})
     except Exception as e:
         return jsonify({'message': f'Rejection failed: {str(e)}'}), 500
+
+
+@admin_bp.route('/api/admin/rejected_requests')
+def get_rejected_requests():
+    if not is_admin():
+        return jsonify({'message': 'Unauthorized'}), 401
+        
+    requests = db.get_rejected_requests()
+    for req in requests:
+        req['upload_time'] = get_time_ago(req.get('upload_time'))
+    return jsonify(requests)
+
+
+@admin_bp.route('/api/admin/request/<request_id>/delete-file', methods=['DELETE'])
+def delete_request_file(request_id):
+    if 'username' not in session:
+        return jsonify({'message': 'Unauthorized'}), 401
+    if not is_admin():
+        return jsonify({'message': 'Forbidden'}), 403
+        
+    admin_user = session['username']
+    try:
+        success, reason = db.delete_encrypted_file(request_id, admin_user)
+        if reason == "Already deleted":
+            return jsonify({'message': 'File already removed from storage.'}), 200
+            
+        if not success:
+            if reason == "Missing from storage":
+                req = db.get_request(request_id)
+                filename = req.get('filename') if req else 'Unknown'
+                audit_ledger.add_event(json.dumps({
+                    'action': 'STORAGE_INCONSISTENCY',
+                    'reason': 'Encrypted file missing from storage during delete operation',
+                    'request_id': request_id,
+                    'filename': filename,
+                    'administrator': admin_user,
+                    'timestamp': str(datetime.datetime.now())
+                }))
+                db.log_activity(admin_user, "storage_inconsistency_alert", f"Missing file request ID: {request_id}")
+                return jsonify({'message': 'Storage inconsistency detected: Encrypted file is missing. Administrator attention required.'}), 409
+            else:
+                return jsonify({'message': f'Deletion failed: {reason}'}), 400
+                
+        req = db.get_request(request_id)
+        filename = req.get('filename') if req else 'Unknown'
+        status = req.get('status') if req else 'Unknown'
+        audit_ledger.add_event(json.dumps({
+            'action': 'FILE_DELETED',
+            'administrator': admin_user,
+            'request_id': request_id,
+            'filename': filename,
+            'status': status,
+            'timestamp': str(datetime.datetime.now()),
+            'reason': 'Storage Cleanup'
+        }))
+        db.log_activity(admin_user, "file_deleted", f"Deleted file for request ID: {request_id}")
+        
+        return jsonify({'message': 'Encrypted file deleted successfully.'}), 200
+    except Exception as e:
+        logger.error(f"Error during file deletion for request_id={request_id}: {e}", exc_info=True)
+        return jsonify({'message': f'Server error during deletion: {str(e)}'}), 500
+

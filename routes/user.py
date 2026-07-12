@@ -221,6 +221,7 @@ def download_approved_file(file_id):
     if 'username' not in session:
         return jsonify({'message': 'Unauthorized'}), 401
         
+    username = session['username']
     data = request.get_json(silent=True) or {}
     password = data.get('password')
     
@@ -230,6 +231,9 @@ def download_approved_file(file_id):
     req = db.get_approved_request_for_user(file_id, username)
     if not req:
         return jsonify({'message': 'File not found or not approved for download.'}), 404
+        
+    if req.get('file_deleted'):
+        return jsonify({'message': 'File has been permanently deleted from storage.'}), 410
         
     file_info = db.get_file(file_id)
     if not file_info:

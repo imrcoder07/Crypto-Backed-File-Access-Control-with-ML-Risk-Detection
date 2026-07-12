@@ -2830,11 +2830,14 @@
                                     <span class="font-data-mono text-xs uppercase font-bold ${isVerdictAllow ? 'text-secondary' : 'text-error'}">${statusText}</span>
                                     <p class="font-data-mono text-[10px] text-on-surface-variant/60 uppercase">${SecurityUtils.sanitize(request.admin_action || 'Pending review')}</p>
                                     ${request.status === 'approved' ? 
-                                        `<button onclick="downloadApprovedFile('${request.file_id}', '${SecurityUtils.sanitize(request.filename)}')" 
-                                                class="mt-1 flex items-center justify-center gap-1 bg-primary text-on-primary px-3 py-1.5 rounded text-xs font-bold hover:brightness-110 active:scale-95 transition-all">
-                                            <span class="material-symbols-outlined text-xs">download</span>
-                                            <span>RETRIEVE</span>
-                                        </button>` : 
+                                        (request.file_deleted || request.storage_status === 'Missing' ? 
+                                            `<span class="text-[10px] text-error font-bold uppercase block mt-1">Storage Unavailable</span>` :
+                                            `<button onclick="downloadApprovedFile('${request.file_id}', '${SecurityUtils.sanitize(request.filename)}')" 
+                                                    class="mt-1 flex items-center justify-center gap-1 bg-primary text-on-primary px-3 py-1.5 rounded text-xs font-bold hover:brightness-110 active:scale-95 transition-all">
+                                                <span class="material-symbols-outlined text-xs">download</span>
+                                                <span>RETRIEVE</span>
+                                            </button>`
+                                        ) : 
                                         ''}
                                 </div>
                             </div>
@@ -2858,6 +2861,13 @@
                                     <span class="px-2 py-0.5 bg-amber-900/20 text-amber-400 border border-amber-500/20 rounded">ISO: ${isoVerdict}</span>
                                 </div>
                             </div>
+
+                            ${request.file_deleted || request.storage_status === 'Missing' ? `
+                                <div class="p-3 bg-error/5 border-l-2 border-error/50 rounded text-xs">
+                                    <p class="font-bold text-error uppercase mb-1">Storage Unavailable</p>
+                                    <p class="font-body-sm text-on-surface-variant/80">The encrypted file is currently unavailable. Please contact the administrator if you require assistance.</p>
+                                </div>
+                            ` : ''}
 
                             ${request.admin_notes ? `
                                 <div class="p-3 bg-surface-container border-l-2 border-primary/30 rounded-r text-xs">
@@ -3064,11 +3074,17 @@
                         
                         <!-- Actions -->
                         <td class="py-4 px-6 text-right" onclick="event.stopPropagation();">
-                            <button onclick="adminDownloadFile('${file.file_id}', '${SecurityUtils.sanitize(file.filename)}')" 
-                                    class="inline-flex items-center gap-1 bg-primary text-on-primary px-3 py-1.5 rounded text-[10.5px] font-bold hover:brightness-110 active:scale-95 transition-all cursor-pointer tracking-wider download-btn">
-                                <span class="material-symbols-outlined text-xs">download</span>
-                                <span>RETRIEVE</span>
-                            </button>
+                            ${file.file_deleted ? 
+                                `<span class="text-[9px] text-error font-bold uppercase px-2.5 py-1 bg-error/5 rounded border border-error/10">🗑 Storage Deleted</span>` :
+                                (file.storage_status === 'Missing' ? 
+                                    `<span class="text-[9px] text-amber-500 font-bold uppercase px-2.5 py-1 bg-amber-500/5 rounded border border-amber-500/10">⚠ Storage Missing</span>` :
+                                    `<button onclick="adminDownloadFile('${file.file_id}', '${SecurityUtils.sanitize(file.filename)}')" 
+                                            class="inline-flex items-center gap-1 bg-primary text-on-primary px-3 py-1.5 rounded text-[10.5px] font-bold hover:brightness-110 active:scale-95 transition-all cursor-pointer tracking-wider download-btn">
+                                        <span class="material-symbols-outlined text-xs">download</span>
+                                        <span>RETRIEVE</span>
+                                    </button>`
+                                )
+                            }
                         </td>
                     </tr>
                     
@@ -3098,6 +3114,12 @@
                                 <div class="flex flex-col gap-2">
                                     <h4 class="font-label-caps text-label-caps text-primary uppercase mb-1">Authorization Details</h4>
                                     <p>Policy: <span class="text-on-surface font-bold">${file.requires_password ? '🔑 Password Protected' : '🔓 Public / No Restrictions'}</span></p>
+                                    <p>Storage Status: <span class="${file.file_deleted ? 'text-error' : (file.storage_status === 'Missing' ? 'text-amber-500 font-bold' : 'text-secondary')} font-bold">${file.file_deleted ? 'Deleted' : (file.storage_status === 'Missing' ? 'Missing' : 'Stored')}</span></p>
+                                    ${file.file_deleted ? `
+                                        <p class="text-error font-bold uppercase text-[9px] mt-1 bg-error/5 border border-error/20 p-1.5 rounded">Encrypted file removed from storage.</p>
+                                    ` : (file.storage_status === 'Missing' ? `
+                                        <p class="text-amber-500 font-bold uppercase text-[9px] mt-1 bg-amber-500/5 border border-amber-500/20 p-1.5 rounded">Warning: Encrypted file missing from storage.</p>
+                                    ` : '')}
                                     ${file.admin_notes ? `
                                         <p class="mt-1">Verdict Notes: <span class="text-on-surface italic">"${SecurityUtils.sanitize(file.admin_notes)}"</span></p>
                                     ` : ''}
@@ -3233,14 +3255,12 @@
                 let url = '/api/admin/pending_requests';
                 if (window.currentQueueFilter === 'approved') {
                     url = '/api/admin/approved_files';
+                } else if (window.currentQueueFilter === 'rejected') {
+                    url = '/api/admin/rejected_requests';
                 }
                 
                 const response = await fetch(url);
                 let requests = await response.json();
-                
-                if (window.currentQueueFilter === 'rejected') {
-                    requests = [];
-                }
 
                 window.lastFetchedRequests = requests || [];
 
@@ -3335,7 +3355,22 @@
                                             <span>DENY</span>
                                         </button>
                                     ` : `
-                                        <span class="text-[9px] text-on-surface-variant/40 uppercase font-bold px-2 py-1 bg-white/05 rounded border border-white/05">${window.currentQueueFilter}</span>
+                                        <div class="inline-flex items-center gap-2">
+                                            <span class="text-[9px] text-on-surface-variant/40 uppercase font-bold px-2 py-1 bg-white/05 rounded border border-white/05">${window.currentQueueFilter}</span>
+                                            ${(window.currentQueueFilter === 'approved' || window.currentQueueFilter === 'rejected') ? 
+                                                (request.file_deleted ? 
+                                                    `<span class="text-[9px] text-error font-bold uppercase px-2 py-1 bg-error/5 rounded border border-error/10">🗑 Storage Deleted</span>` :
+                                                    (request.storage_status === 'Missing' ? 
+                                                        `<span class="text-[9px] text-amber-500 font-bold uppercase px-2 py-1 bg-amber-500/5 rounded border border-amber-500/10">⚠ Storage Missing</span>` :
+                                                        `<button onclick="confirmDeleteFile('${request.request_id}', '${SecurityUtils.sanitize(request.filename)}')" 
+                                                                class="inline-flex items-center gap-1 bg-error/10 text-error border border-error/20 px-2 py-1 rounded text-[10px] font-bold hover:bg-error hover:text-on-error active:scale-95 transition-all cursor-pointer">
+                                                            <span class="material-symbols-outlined text-[10px]">delete_forever</span>
+                                                            <span>DELETE FILE</span>
+                                                        </button>`
+                                                    )
+                                                ) : ''
+                                            }
+                                        </div>
                                     `}
                                 </div>
                             </td>
@@ -3545,6 +3580,48 @@
                 showMessage('admin-requests-table', `Error: Failed to reject: ${SecurityUtils.sanitize(error.message)}`, 'message-error');
             }
         }
+
+        async function confirmDeleteFile(requestId, filename) {
+            const message = `Delete Encrypted File?\n\n` +
+                            `This action permanently removes the encrypted file "${filename}" from storage.\n\n` +
+                            `The following information will remain permanently available:\n` +
+                            `• Request history\n` +
+                            `• Audit logs\n` +
+                            `• ML analysis\n` +
+                            `• Risk score\n` +
+                            `• Administrator actions\n\n` +
+                            `This action cannot be undone.\n\n` +
+                            `Continue?`;
+            
+            if (confirm(message)) {
+                try {
+                    showMessage('admin-requests-table', '⏳ Deleting encrypted file...', 'message-info');
+                    
+                    const response = await fetch(`/api/admin/request/${requestId}/delete-file`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    const result = await response.json();
+                    if (!response.ok) {
+                        throw new Error(result.message || 'Deletion failed');
+                    }
+                    
+                    showMessage('admin-requests-table', `✅ Encrypted file for "${filename}" removed from storage.`, 'message-success');
+                    
+                    // Refresh queues and stats
+                    await loadAdminRequests();
+                    await updateAdminStats();
+                    if (typeof loadApprovedFiles === 'function') {
+                        await loadApprovedFiles(true);
+                    }
+                } catch (error) {
+                    console.error('Delete error:', error);
+                    showMessage('admin-requests-table', `Error: ${SecurityUtils.sanitize(error.message)}`, 'message-error');
+                }
+            }
+        }
+
 
         async function updateAdminStats() {
             try {

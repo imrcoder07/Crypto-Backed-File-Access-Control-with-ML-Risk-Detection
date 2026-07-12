@@ -25,6 +25,7 @@ ENV/
 .coverage
 htmlcov/
 *.log
+tests/
 
 # === EDITOR ===
 .vscode/
