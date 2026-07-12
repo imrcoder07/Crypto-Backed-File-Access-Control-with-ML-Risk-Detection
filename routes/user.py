@@ -88,7 +88,10 @@ def upload_file():
     is_version_update = False
 
     if existing_file:
-        if existing_file.get('file_hash') == file_hash:
+        if db.is_file_deleted(existing_file.get('file_id')):
+            # Allow re-uploading if the previous file has been permanently deleted
+            pass
+        elif existing_file.get('file_hash') == file_hash:
             return jsonify({
                 'message': 'This exact file has already been uploaded. No modifications detected.'
             }), 400

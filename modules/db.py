@@ -257,6 +257,17 @@ def get_file(file_id: str) -> dict | None:
     return dict(row) if row else None
 
 
+def is_file_deleted(file_id: str) -> bool:
+    sql = "SELECT file_deleted FROM requests WHERE file_id = %s;"
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (file_id,))
+            row = cur.fetchone()
+            if row and row[0]:
+                return True
+    return False
+
+
 def file_count() -> int:
     with get_db() as conn:
         with conn.cursor() as cur:
