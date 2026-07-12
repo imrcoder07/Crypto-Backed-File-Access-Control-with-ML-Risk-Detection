@@ -3078,11 +3078,18 @@
                                 `<span class="text-[9px] text-error font-bold uppercase px-2.5 py-1 bg-error/5 rounded border border-error/10">🗑 Storage Deleted</span>` :
                                 (file.storage_status === 'Missing' ? 
                                     `<span class="text-[9px] text-amber-500 font-bold uppercase px-2.5 py-1 bg-amber-500/5 rounded border border-amber-500/10">⚠ Storage Missing</span>` :
-                                    `<button onclick="adminDownloadFile('${file.file_id}', '${SecurityUtils.sanitize(file.filename)}')" 
-                                            class="inline-flex items-center gap-1 bg-primary text-on-primary px-3 py-1.5 rounded text-[10.5px] font-bold hover:brightness-110 active:scale-95 transition-all cursor-pointer tracking-wider download-btn">
-                                        <span class="material-symbols-outlined text-xs">download</span>
-                                        <span>RETRIEVE</span>
-                                    </button>`
+                                    `<div class="inline-flex gap-2 justify-end">
+                                         <button onclick="adminDownloadFile('${file.file_id}', '${SecurityUtils.sanitize(file.filename)}')" 
+                                                 class="inline-flex items-center gap-1 bg-primary text-on-primary px-3 py-1.5 rounded text-[10.5px] font-bold hover:brightness-110 active:scale-95 transition-all cursor-pointer tracking-wider download-btn">
+                                             <span class="material-symbols-outlined text-xs">download</span>
+                                             <span>RETRIEVE</span>
+                                         </button>
+                                         <button onclick="confirmDeleteFile('${file.request_id}', '${SecurityUtils.sanitize(file.filename)}')" 
+                                                 class="inline-flex items-center gap-1 bg-error/10 text-error border border-error/20 px-2 py-1.5 rounded text-[10.5px] font-bold hover:bg-error hover:text-on-error active:scale-95 transition-all cursor-pointer">
+                                             <span class="material-symbols-outlined text-[10.5px]">delete_forever</span>
+                                             <span>DELETE</span>
+                                         </button>
+                                     </div>`
                                 )
                             }
                         </td>
