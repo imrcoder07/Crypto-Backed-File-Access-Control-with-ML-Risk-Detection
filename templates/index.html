@@ -1846,9 +1846,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         // =============================================
+        // GLOBAL CONSTANTS
+        // =============================================
+
+        // Single source of truth for the ML high-risk threshold.
+        // Must match backend: MLRiskAnalyzer.HIGH_RISK_THRESHOLD = 0.75
+        const ML_HIGH_RISK_THRESHOLD = 0.75;
+
+        // =============================================
         // ADVANCED 3D DIGITAL PLEXUS NETWORK BACKGROUND
         // =============================================
-        
         function initThreeJSBackground() {
             try {
                 const canvas = document.getElementById('bg-canvas');
@@ -3294,8 +3301,6 @@
                 }
                 
                 let html = '';
-                // Single source of truth for the High Risk threshold — defined at window scope above.
-                // (ML_HIGH_RISK_THRESHOLD = 0.75 is already declared outside this forEach)
                 requests.forEach(request => {
                     const mlDetails = request.ml_details || {};
                     const modelPredictions = mlDetails.model_predictions || {};
@@ -3850,7 +3855,7 @@
             const locEl = document.getElementById('ml-panel-location');
             if (locEl) locEl.textContent = `${locDev} KM`;
             
-            const ipRep = hasML ? (riskVal >= threshold ? 'HIGH RISK' : 'SAFE') : 'N/A';
+            const ipRep = (hasML && !mlFailed) ? (riskVal >= ML_HIGH_RISK_THRESHOLD ? 'HIGH RISK' : 'SAFE') : 'N/A';
             const ipEl = document.getElementById('ml-panel-ip');
             if (ipEl) {
                 ipEl.textContent = ipRep;
@@ -3891,9 +3896,6 @@
 
         window.currentQueueFilter = 'pending';
         window.lastFetchedRequests = [];
-        // Single threshold constant accessible to all functions in this script block.
-        // Must match backend HIGH_RISK_THRESHOLD = 0.75 in modules/ml_analyzer.py
-        const ML_HIGH_RISK_THRESHOLD = 0.75;
 
         async function setQueueFilter(filter) {
             window.currentQueueFilter = filter;
