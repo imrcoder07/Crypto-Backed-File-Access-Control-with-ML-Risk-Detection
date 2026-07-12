@@ -133,6 +133,15 @@ def upload_file():
     # Centralized Feature Generation
     features = ml_analyzer.generate_features(filename, file_size, role=mapped_role, activity='File Copy')
 
+    # Validate features before passing to the ML engine.
+    # Malformed input must never be silently treated as High Risk.
+    try:
+        ml_analyzer.validate_features(features)
+    except ValueError as validation_error:
+        return jsonify({
+            'message': f'Feature validation failed: {str(validation_error)}'
+        }), 400
+
     # Async configuration check
     use_async = os.environ.get("USE_ASYNC_ML", "").lower() == "true"
     req_id = str(uuid.uuid4())
@@ -163,8 +172,20 @@ def upload_file():
         }), 202
     else:
         # SYNCHRONOUS FALLBACK PATH
-        ml_results = ml_analyzer.analyze_risk(features)
-        if is_version_update:
+        ml_results = ml_analyzer.analyze_risk(features, request_id=req_id)
+
+        if ml_results.get('ml_status') == 'Error':
+            # ML pipeline encountered an internal error.
+            # The request still enters the normal pending workflow so the admin
+            # can review it manually.  Do NOT reclassify it as High Risk.
+            import logging as _logging
+            _logging.getLogger(__name__).warning(
+                "ML analysis returned Error for request %s — storing error details "
+                "and keeping request in pending state for manual admin review.",
+                req_id
+            )
+
+        if is_version_update and ml_results.get('ml_status') != 'Error':
             ml_results['verdict'] = "Review (Modified Version)"
             ml_results['risk_score'] = max(ml_results.get('risk_score', 0), 0.75)
             ml_results['warnings'] = ml_results.get('warnings', []) + ["Tamper Check: File content differs from downloaded version"]
@@ -172,7 +193,7 @@ def upload_file():
         db.create_request(req_id, username, file_id, filename, "Version Update" if is_version_update else "Upload Request", ml_results, status="pending")
         audit_ledger.add_event(f"User '{username}' uploaded file: {filename} (ID: {file_id})")
         db.log_activity(username, "file_upload", f"File: {filename}")
-        
+
         return jsonify({
             'message': 'File securely encrypted and uploaded. Pending admin approval.',
             'file_id': file_id,

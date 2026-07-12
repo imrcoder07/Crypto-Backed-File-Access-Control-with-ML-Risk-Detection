@@ -2850,10 +2850,10 @@
                                 </div>
                                 <div class="flex items-center justify-between mb-1.5">
                                     <span class="font-data-mono text-xs uppercase ${verdictColor}">${SecurityUtils.sanitize(mlDetails.final_verdict || 'Allow')}</span>
-                                    <span class="font-data-mono text-[10px] text-on-surface-variant/60">Confidence: ${SecurityUtils.sanitize(mlDetails.confidence || '85.0%')}</span>
+                                    <span class="font-data-mono text-[10px] text-on-surface-variant/60">Confidence: ${mlDetails.confidence != null ? SecurityUtils.sanitize(String(mlDetails.confidence)) : 'Unavailable'}</span>
                                 </div>
                                 <div class="confidence-bar">
-                                    <div class="confidence-level" style="width: ${parseFloat(mlDetails.confidence) || '85'}%"></div>
+                                    <div class="confidence-level" style="width: ${mlDetails.confidence != null ? (parseFloat(mlDetails.confidence) <= 1.0 ? parseFloat(mlDetails.confidence)*100 : parseFloat(mlDetails.confidence)) : 0}%"></div>
                                 </div>
                                 <div class="flex flex-wrap gap-2 mt-3 font-data-mono text-[9px] uppercase">
                                     <span class="px-2 py-0.5 bg-blue-900/20 text-blue-400 border border-blue-500/20 rounded">RF: ${rfVerdict}</span>
@@ -3111,9 +3111,9 @@
                                 <div class="flex flex-col gap-2">
                                     <h4 class="font-label-caps text-label-caps text-primary uppercase mb-1">ML Verdict & Risk</h4>
                                     <p>Verdict: <span class="font-bold text-secondary uppercase">${SecurityUtils.sanitize(mlDetails.final_verdict || 'Allow')}</span></p>
-                                    <p>Confidence: <span class="text-on-surface font-bold">${SecurityUtils.sanitize(mlDetails.confidence || '85.0%')}</span></p>
+                                    <p>Confidence: <span class="text-on-surface font-bold">${mlDetails.confidence != null ? SecurityUtils.sanitize(String(mlDetails.confidence)) : 'Unavailable'}</span></p>
                                     <div class="confidence-bar w-full max-w-[200px]">
-                                        <div class="confidence-level" style="width: ${parseFloat(mlDetails.confidence) || '85'}%"></div>
+                                        <div class="confidence-level" style="width: ${mlDetails.confidence != null ? (parseFloat(mlDetails.confidence) <= 1.0 ? parseFloat(mlDetails.confidence)*100 : parseFloat(mlDetails.confidence)) : 0}%"></div>
                                     </div>
                                 </div>
                                 
@@ -3294,25 +3294,31 @@
                 }
                 
                 let html = '';
+                // Single source of truth for the High Risk threshold — defined at window scope above.
+                // (ML_HIGH_RISK_THRESHOLD = 0.75 is already declared outside this forEach)
                 requests.forEach(request => {
                     const mlDetails = request.ml_details || {};
                     const modelPredictions = mlDetails.model_predictions || {};
-                         const riskVal = mlDetails.risk_score !== undefined ? mlDetails.risk_score : 0.0;
-                    const threshold = 0.75;
-                    
+                    const mlStatusVal = mlDetails.ml_status || '';
+                    const mlFailed = (mlStatusVal === 'Error');
+                         const riskVal = (!mlFailed && mlDetails.risk_score !== undefined && mlDetails.risk_score !== null) ? mlDetails.risk_score : 0.0;
+
                     let riskText = 'LOW RISK';
                     let riskColor = 'status-approved';
-                    if (riskVal >= threshold) {
+                    if (mlFailed) {
+                        riskText = '\u26A0 ML Analysis Failed';
+                        riskColor = 'status-pending';
+                    } else if (riskVal >= ML_HIGH_RISK_THRESHOLD) {
                         riskText = 'HIGH RISK';
                         riskColor = 'status-rejected';
                     } else if (riskVal > 0.3) {
                         riskText = 'MEDIUM RISK';
                         riskColor = 'status-pending';
                     }
-                    
-                    const displayVerdict = mlDetails.final_verdict || (riskVal >= threshold ? 'Deny' : 'Allow');
-                    const isAllow = displayVerdict.toLowerCase() === 'allow';
-                    const verdictColor = isAllow ? 'text-secondary' : 'text-error';
+
+                    const displayVerdict = mlFailed ? 'Unavailable' : (mlDetails.final_verdict || (riskVal >= ML_HIGH_RISK_THRESHOLD ? 'Deny' : 'Allow'));
+                    const isAllow = !mlFailed && displayVerdict.toLowerCase() === 'allow';
+                    const verdictColor = mlFailed ? 'text-outline' : (isAllow ? 'text-secondary' : 'text-error');
                     
                     const timeAgoStr = request.time_ago || (request.upload_time ? SecurityUtils.sanitize(request.upload_time) : 'Recently');
                     const fileSizeMB = request.file_size_mb || (request.file_size / (1024 * 1024)).toFixed(2);
@@ -3793,23 +3799,28 @@
             if (titleEl) titleEl.textContent = `ML Analysis: ${SecurityUtils.sanitize(req.username)}`;
             
             const hasML = req.ml_details && Object.keys(req.ml_details).length > 0;
-            const threshold = 0.75;
-            
+            const mlFailed = hasML && (req.ml_details.ml_status === 'Error');
+
             let riskVal = 0.0;
             const riskEl = document.getElementById('ml-panel-risk');
             if (riskEl) {
-                if (hasML && req.ml_details.risk_score !== undefined) {
+                if (mlFailed) {
+                    riskEl.textContent = 'N/A';
+                } else if (hasML && req.ml_details.risk_score !== undefined && req.ml_details.risk_score !== null) {
                     riskVal = req.ml_details.risk_score;
                     riskEl.textContent = riskVal.toFixed(2);
                 } else {
                     riskEl.textContent = 'N/A';
                 }
             }
-            
+
             const verdictEl = document.getElementById('ml-panel-verdict');
             if (verdictEl) {
-                if (hasML) {
-                    const rawVerdict = req.ml_details.final_verdict || (riskVal >= threshold ? 'Deny' : 'Allow');
+                if (mlFailed) {
+                    verdictEl.textContent = 'UNAVAILABLE';
+                    verdictEl.className = 'font-data-mono text-xs font-bold text-amber-400 mt-2 uppercase';
+                } else if (hasML) {
+                    const rawVerdict = req.ml_details.final_verdict || (riskVal >= ML_HIGH_RISK_THRESHOLD ? 'Deny' : 'Allow');
                     const verdict = rawVerdict.toUpperCase();
                     verdictEl.textContent = verdict;
                     verdictEl.className = `font-data-mono text-xs font-bold ${verdict === 'ALLOW' ? 'text-secondary' : 'text-error'} mt-2 uppercase`;
@@ -3867,7 +3878,7 @@
                 if (confTextEl) confTextEl.textContent = `${confidence.toFixed(1)}%`;
                 if (confBar) {
                     confBar.style.width = `${confidence}%`;
-                    confBar.className = `confidence-level ${riskVal >= threshold ? 'bg-error' : 'bg-secondary'}`;
+                    confBar.className = `confidence-level ${riskVal >= ML_HIGH_RISK_THRESHOLD ? 'bg-error' : 'bg-secondary'}`;
                 }
             } else {
                 if (confTextEl) confTextEl.textContent = 'Unavailable';
@@ -3880,6 +3891,9 @@
 
         window.currentQueueFilter = 'pending';
         window.lastFetchedRequests = [];
+        // Single threshold constant accessible to all functions in this script block.
+        // Must match backend HIGH_RISK_THRESHOLD = 0.75 in modules/ml_analyzer.py
+        const ML_HIGH_RISK_THRESHOLD = 0.75;
 
         async function setQueueFilter(filter) {
             window.currentQueueFilter = filter;
