@@ -279,10 +279,13 @@ class AuditQueryService:
         for rec in normalized:
             if match_filter(rec, filter_obj):
                 filtered.append(rec)
+        
+        # Reverse list to ensure newest-first (new to old) order
+        filtered.reverse()
                 
         filtered_count = len(filtered)
                 
-        # 4. Sorting & Pagination (ledger snapshot returns newest-first by design)
+        # 4. Sorting & Pagination
         total = filtered_count
         sliced = filtered[filter_obj.offset : filter_obj.offset + filter_obj.limit]
         
