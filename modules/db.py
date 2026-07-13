@@ -551,19 +551,29 @@ def log_activity(username: str, activity: str, details: str = '') -> None:
             cur.execute(prune_sql, (username,))
 
 
-def get_user_activity(username: str, count: int = 20) -> list:
+def get_user_activity(username: str, count: int = 20, offset: int = 0, include_total: bool = False):
     sql = """
         SELECT activity, details, ts
         FROM user_activity_log
         WHERE username = %s
         ORDER BY ts DESC
-        LIMIT %s;
+        LIMIT %s OFFSET %s;
     """
     with get_db() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute(sql, (username, count))
+            cur.execute(sql, (username, count, offset))
             rows = cur.fetchall()
-    return [dict(r) for r in rows]
+        
+        total = 0
+        if include_total:
+            with conn.cursor() as cur:
+                cur.execute("SELECT COUNT(*) FROM user_activity_log WHERE username = %s;", (username,))
+                total = cur.fetchone()[0]
+                
+    result_rows = [dict(r) for r in rows]
+    if include_total:
+        return result_rows, total
+    return result_rows
 
 
 # ── File access log ───────────────────────────────────────────────────────────

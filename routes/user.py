@@ -1,8 +1,10 @@
 import os
 import uuid
+import datetime
 from flask import Blueprint, request, jsonify, session, send_file
 from werkzeug.utils import secure_filename
-from modules.extensions import audit_ledger, ml_analyzer
+from modules.extensions import ml_analyzer
+from modules.audit_utils import log_event
 from modules.encryption_utils import encryption_service
 from modules.utils import validate_filename, get_time_ago
 from modules import db
@@ -49,6 +51,38 @@ def get_user_files():
             'last_accessed': get_time_ago(db.get_last_file_access_time(file_id))
         })
     return jsonify(result)
+
+@user_bp.route('/api/user/activity', methods=['GET'])
+def get_user_activity():
+    if 'username' not in session:
+        return jsonify({'message': 'Unauthorized'}), 401
+
+    username = session['username']
+    try:
+        limit = int(request.args.get('limit', 50))
+    except (TypeError, ValueError):
+        limit = 50
+    limit = max(1, min(limit, 100))
+
+    activities = db.get_user_activity(username, count=limit)
+    result = []
+    for act in activities:
+        ts = act.get('ts')
+        ts_str = ts.strftime('%Y-%m-%d %H:%M:%S') if isinstance(ts, datetime.datetime) else str(ts)
+        act_type = str(act.get('activity', '')).upper()
+        details = act.get('details') or ''
+        result.append({
+            'activity': act.get('activity', ''),
+            'details': details,
+            'timestamp': ts_str,
+            'display': f"[{ts_str}] {act_type}{': ' + details if details else ''}"
+        })
+
+    return jsonify({
+        'activities': result,
+        'count': len(result),
+        'limit': limit
+    })
 
 @user_bp.route('/upload', methods=['POST'])
 def upload_file():
@@ -163,6 +197,23 @@ def upload_file():
         from modules.tasks import run_ml_analysis
         task = run_ml_analysis.delay(req_id, file_id, filename, features, username, is_version_update=is_version_update)
         
+        # Log structured events for encryption and request creation
+        log_event(
+            action="FILE_ENCRYPT",
+            username=username,
+            file_id=file_id,
+            filename=filename,
+            details=f"File '{filename}' encrypted successfully."
+        )
+        log_event(
+            action="ACCESS_REQUEST_CREATED",
+            username=username,
+            request_id=req_id,
+            file_id=file_id,
+            filename=filename,
+            details=f"Access request created for file: {filename}"
+        )
+        
         return jsonify({
             'message': 'File securely encrypted and uploaded. Risk analysis enqueued.',
             'file_id': file_id,
@@ -172,12 +223,20 @@ def upload_file():
         }), 202
     else:
         # SYNCHRONOUS FALLBACK PATH
+        log_event(
+            action="ML_ANALYSIS_STARTED",
+            request_id=req_id,
+            details=f"ML analysis started for request: {req_id}"
+        )
         ml_results = ml_analyzer.analyze_risk(features, request_id=req_id)
-
-        if ml_results.get('ml_status') == 'Error':
-            # ML pipeline encountered an internal error.
-            # The request still enters the normal pending workflow so the admin
-            # can review it manually.  Do NOT reclassify it as High Risk.
+        
+        if ml_results.get('ml_status') != 'Error':
+            log_event(
+                action="ML_ANALYSIS_COMPLETED",
+                request_id=req_id,
+                details=f"ML analysis completed successfully for request: {req_id}"
+            )
+        else:
             import logging as _logging
             _logging.getLogger(__name__).warning(
                 "ML analysis returned Error for request %s — storing error details "
@@ -191,7 +250,30 @@ def upload_file():
             ml_results['warnings'] = ml_results.get('warnings', []) + ["Tamper Check: File content differs from downloaded version"]
 
         db.create_request(req_id, username, file_id, filename, "Version Update" if is_version_update else "Upload Request", ml_results, status="pending")
-        audit_ledger.add_event(f"User '{username}' uploaded file: {filename} (ID: {file_id})")
+        
+        # Log structured events
+        log_event(
+            action="FILE_ENCRYPT",
+            username=username,
+            file_id=file_id,
+            filename=filename,
+            details=f"File '{filename}' encrypted successfully."
+        )
+        log_event(
+            action="ACCESS_REQUEST_CREATED",
+            username=username,
+            request_id=req_id,
+            file_id=file_id,
+            filename=filename,
+            details=f"Access request created for file: {filename}"
+        )
+        log_event(
+            action="FILE_UPLOAD",
+            username=username,
+            file_id=file_id,
+            filename=filename,
+            details=f"User uploaded file: {filename} (ID: {file_id})"
+        )
         db.log_activity(username, "file_upload", f"File: {filename}")
 
         return jsonify({
@@ -272,7 +354,20 @@ def download_approved_file(file_id):
         
         decrypted_data = encryption_service.decrypt(encrypted_data, password, salt)
         
-        audit_ledger.add_event(f"User '{username}' securely downloaded file: {file_info['filename']}")
+        log_event(
+            action="FILE_DECRYPT",
+            username=username,
+            file_id=file_id,
+            filename=file_info['filename'],
+            details=f"File decryption successful for user: {username}"
+        )
+        log_event(
+            action="FILE_DOWNLOAD",
+            username=username,
+            file_id=file_id,
+            filename=file_info['filename'],
+            details=f"User '{username}' securely downloaded file: {file_info['filename']}"
+        )
         db.log_activity(username, "file_download", f"File: {file_info['filename']}")
         db.log_file_access(file_id, username, "download", success=True)
         

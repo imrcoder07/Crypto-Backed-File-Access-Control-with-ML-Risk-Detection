@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, session, render_template
 import datetime
-from modules.extensions import audit_ledger, limiter
+from modules.extensions import limiter
+from modules.audit_utils import log_event
 from modules.db import log_activity, get_user, create_user
 from modules.auth_utils import hash_password, check_password
 
@@ -33,7 +34,11 @@ def handle_signup():
         department="General"
     )
 
-    audit_ledger.add_event(f"New user registered: {username}")
+    log_event(
+        action="ACCOUNT_CREATED",
+        username=username,
+        details=f"New user registered: {username}"
+    )
     log_activity(username, "account_creation")
     return jsonify({'message': 'User created successfully.'})
 
@@ -49,10 +54,19 @@ def handle_login():
         session['username'] = username
         session['role'] = user_data['role']
         session['login_time'] = str(datetime.datetime.now())
-        audit_ledger.add_event(f"User '{username}' logged in")
+        log_event(
+            action="LOGIN_SUCCESS",
+            username=username,
+            details=f"User '{username}' logged in"
+        )
         log_activity(username, "login_success")
         return jsonify({'role': session['role'], 'username': username})
 
+    log_event(
+        action="LOGIN_FAILED",
+        username=username or "unknown_user",
+        details=f"Failed login attempt for user: {username or 'unknown_user'}"
+    )
     if username:
         log_activity(username, "login_failed")
     return jsonify({'message': 'Invalid username or password.'}), 401
@@ -62,7 +76,11 @@ def handle_login():
 def handle_logout(): 
     if 'username' in session:
         username = session['username']
-        audit_ledger.add_event(f"User '{username}' logged out")
+        log_event(
+            action="LOGOUT",
+            username=username,
+            details=f"User '{username}' logged out"
+        )
         log_activity(username, "logout")
     session.clear()
     return jsonify({'status': 'success'})

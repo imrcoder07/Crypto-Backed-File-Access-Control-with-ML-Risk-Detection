@@ -5,6 +5,7 @@ import logging
 import datetime
 from flask import Blueprint, request, jsonify, session, send_file
 from modules.extensions import audit_ledger, ml_analyzer
+from modules.audit_utils import log_event
 from modules.db import get_all_users
 from modules.utils import get_time_ago
 from modules import db
@@ -135,8 +136,12 @@ def admin_download_file(file_id):
         # Fetch encrypted bytes from S3/MinIO — no local disk access
         encrypted_bytes = storage_service.get_file(object_path)
 
-        audit_ledger.add_event(
-            f"Admin '{admin_user}' downloaded encrypted blob: {file_info['filename']} (id={file_id})"
+        log_event(
+            action="ADMIN_FILE_DOWNLOAD",
+            admin=admin_user,
+            file_id=file_id,
+            filename=file_info['filename'],
+            details=f"Admin '{admin_user}' downloaded encrypted blob: {file_info['filename']} (id={file_id})"
         )
         db.log_activity(admin_user, "admin_download", f"Encrypted blob: {file_info['filename']}")
         db.log_file_access(file_id, admin_user, "admin_audit_download", success=True)
@@ -171,7 +176,12 @@ def approve_request():
         if not updated_req:
             return jsonify({'message': 'Request not found or already processed'}), 404
             
-        audit_ledger.add_event(f"Admin '{admin_user}' APPROVED access request {request_id}")
+        log_event(
+            action="ACCESS_REQUEST_APPROVED",
+            admin=admin_user,
+            request_id=request_id,
+            details=f"Admin '{admin_user}' APPROVED access request {request_id}"
+        )
         db.log_activity(admin_user, "approve_request", f"Request ID: {request_id}")
         
         return jsonify({'message': 'Request approved successfully'})
@@ -197,7 +207,12 @@ def reject_request():
         if not updated_req:
             return jsonify({'message': 'Request not found or already processed'}), 404
             
-        audit_ledger.add_event(f"Admin '{admin_user}' REJECTED access request {request_id}")
+        log_event(
+            action="ACCESS_REQUEST_REJECTED",
+            admin=admin_user,
+            request_id=request_id,
+            details=f"Admin '{admin_user}' REJECTED access request {request_id}"
+        )
         db.log_activity(admin_user, "reject_request", f"Request ID: {request_id}")
         
         return jsonify({'message': 'Request rejected successfully'})
@@ -233,14 +248,14 @@ def delete_request_file(request_id):
             if reason == "Missing from storage":
                 req = db.get_request(request_id)
                 filename = req.get('filename') if req else 'Unknown'
-                audit_ledger.add_event(json.dumps({
-                    'action': 'STORAGE_INCONSISTENCY',
-                    'reason': 'Encrypted file missing from storage during delete operation',
-                    'request_id': request_id,
-                    'filename': filename,
-                    'administrator': admin_user,
-                    'timestamp': str(datetime.datetime.now())
-                }))
+                log_event(
+                    action="STORAGE_INCONSISTENCY",
+                    admin=admin_user,
+                    request_id=request_id,
+                    filename=filename,
+                    details="Encrypted file missing from storage during delete operation",
+                    metadata={'reason': 'Encrypted file missing from storage during delete operation'}
+                )
                 db.log_activity(admin_user, "storage_inconsistency_alert", f"Missing file request ID: {request_id}")
                 return jsonify({'message': 'Storage inconsistency detected: Encrypted file is missing. Administrator attention required.'}), 409
             else:
@@ -249,19 +264,126 @@ def delete_request_file(request_id):
         req = db.get_request(request_id)
         filename = req.get('filename') if req else 'Unknown'
         status = req.get('status') if req else 'Unknown'
-        audit_ledger.add_event(json.dumps({
-            'action': 'FILE_DELETED',
-            'administrator': admin_user,
-            'request_id': request_id,
-            'filename': filename,
-            'status': status,
-            'timestamp': str(datetime.datetime.now()),
-            'reason': 'Storage Cleanup'
-        }))
+        log_event(
+            action="FILE_DELETED",
+            admin=admin_user,
+            request_id=request_id,
+            filename=filename,
+            details=f"Admin '{admin_user}' deleted file: {filename}",
+            metadata={'status': status, 'reason': 'Storage Cleanup'}
+        )
         db.log_activity(admin_user, "file_deleted", f"Deleted file for request ID: {request_id}")
         
         return jsonify({'message': 'Encrypted file deleted successfully.'}), 200
     except Exception as e:
         logger.error(f"Error during file deletion for request_id={request_id}: {e}", exc_info=True)
         return jsonify({'message': f'Server error during deletion: {str(e)}'}), 500
+
+
+@admin_bp.route('/api/admin/user_activity', methods=['GET'])
+def get_admin_user_activity():
+    if not is_admin():
+        return jsonify({'message': 'Unauthorized'}), 401
+
+    admin_user = session['username']
+    username = request.args.get('username', '').strip()
+    if not username:
+        return jsonify({'message': 'Username query parameter is required.'}), 400
+
+    # User existence verification
+    user_info = db.get_user(username)
+    if not user_info:
+        return jsonify({'message': f"User '{username}' not found."}), 404
+
+    # Pagination parsing
+    try:
+        limit = int(request.args.get('limit', 50))
+    except (TypeError, ValueError):
+        limit = 50
+    limit = max(1, min(limit, 100))
+
+    try:
+        offset = int(request.args.get('offset', 0))
+    except (TypeError, ValueError):
+        offset = 0
+    offset = max(0, offset)
+
+    # Retrieval via extended DB helper
+    try:
+        rows, total = db.get_user_activity(username, count=limit, offset=offset, include_total=True)
+    except Exception as e:
+        logger.error(f"Failed to load user activity for {username}: {e}", exc_info=True)
+        return jsonify({'message': 'Internal error retrieving user activity.'}), 500
+
+    # Format structured output only (presentation string formatting deferred to UI)
+    activities_list = []
+    for row in rows:
+        ts = row.get('ts')
+        ts_str = ts.strftime('%Y-%m-%d %H:%M:%S') if hasattr(ts, 'strftime') else str(ts)
+        activities_list.append({
+            'activity': row.get('activity', ''),
+            'details': row.get('details') or '',
+            'timestamp': ts_str
+        })
+
+    # Log standardized admin view event (Phase 3 audit standardization compliant)
+    log_event(
+        action="ADMIN_USER_ACTIVITY_VIEW",
+        admin=admin_user,
+        username=username,
+        details=f"Viewed user activity history for user: {username}"
+    )
+
+    return jsonify({
+        'username': username,
+        'activities': activities_list,
+        'pagination': {
+            'limit': limit,
+            'offset': offset,
+            'total': total,
+            'has_more': (offset + len(rows)) < total
+        }
+    }), 200
+
+
+@admin_bp.route('/api/admin/audit', methods=['GET'])
+def get_admin_audit():
+    if not is_admin():
+        return jsonify({'message': 'Unauthorized'}), 401
+
+    # Extract filter parameters from query parameters
+    query = request.args.get('query')
+    username = request.args.get('username')
+    admin = request.args.get('admin')
+    action = request.args.get('action')
+    severity = request.args.get('severity')
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    limit = request.args.get('limit')
+    offset = request.args.get('offset')
+
+    from modules.audit_query_service import AuditQueryFilter, AuditQueryService
+
+    # 1. Instantiate validation filter object
+    query_filter = AuditQueryFilter(
+        query=query,
+        username=username,
+        admin=admin,
+        action=action,
+        severity=severity,
+        start_date=start_date,
+        end_date=end_date,
+        limit=limit,
+        offset=offset
+    )
+
+    # 2. Delegate query execution to decoupled AuditQueryService
+    try:
+        results = AuditQueryService.query_audit_logs(query_filter)
+        return jsonify(results), 200
+    except Exception as e:
+        logger.error(f"Audit log search failed: {e}", exc_info=True)
+        return jsonify({'message': 'Internal search query execution failed.'}), 500
+
+
 

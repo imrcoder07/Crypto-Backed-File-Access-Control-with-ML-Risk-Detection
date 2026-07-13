@@ -1775,11 +1775,102 @@
                             </div>
                         </div>
 
+                        <!-- Advanced Audit Search & Filter Panel (Phase 5) -->
+                        <div class="glass-panel p-6 rounded-lg mb-6 border border-white/05 bg-[#0e1217]/60">
+                            <div class="flex items-center gap-2 mb-4">
+                                <span class="material-symbols-outlined text-primary text-base">manage_search</span>
+                                <h3 class="font-display-md text-xs text-primary font-bold uppercase tracking-wider">Audit Investigation Center</h3>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs font-data-mono">
+                                <!-- Search query -->
+                                <div class="flex flex-col gap-1.5">
+                                    <label class="text-[10px] text-on-surface-variant/60 uppercase">Search Details/ID</label>
+                                    <input type="text" id="audit-filter-query" placeholder="Type keywords..." class="input-field py-1 px-2.5 text-xs text-on-surface bg-white/02 border border-white/10 rounded focus:border-primary/50 focus:ring-0 outline-none">
+                                </div>
+                                
+                                <!-- Operator Username -->
+                                <div class="flex flex-col gap-1.5">
+                                    <label class="text-[10px] text-on-surface-variant/60 uppercase">Operator Username</label>
+                                    <input type="text" id="audit-filter-username" placeholder="Exact username..." class="input-field py-1 px-2.5 text-xs text-on-surface bg-white/02 border border-white/10 rounded focus:border-primary/50 focus:ring-0 outline-none">
+                                </div>
+                                
+                                <!-- Admin Username -->
+                                <div class="flex flex-col gap-1.5">
+                                    <label class="text-[10px] text-on-surface-variant/60 uppercase">Admin Administrator</label>
+                                    <input type="text" id="audit-filter-admin" placeholder="Exact admin..." class="input-field py-1 px-2.5 text-xs text-on-surface bg-white/02 border border-white/10 rounded focus:border-primary/50 focus:ring-0 outline-none">
+                                </div>
+                                
+                                <!-- Action type -->
+                                <div class="flex flex-col gap-1.5">
+                                    <label class="text-[10px] text-on-surface-variant/60 uppercase">Event Action</label>
+                                    <select id="audit-filter-action" class="input-field py-1 px-2 text-xs text-on-surface bg-[#14181f] border border-white/10 rounded focus:border-primary/50 focus:ring-0 outline-none cursor-pointer">
+                                        <option value="">ALL ACTIONS</option>
+                                        <option value="ACCOUNT_CREATED">ACCOUNT_CREATED</option>
+                                        <option value="LOGIN_SUCCESS">LOGIN_SUCCESS</option>
+                                        <option value="LOGIN_FAILED">LOGIN_FAILED</option>
+                                        <option value="LOGOUT">LOGOUT</option>
+                                        <option value="FILE_UPLOAD">FILE_UPLOAD</option>
+                                        <option value="FILE_ENCRYPT">FILE_ENCRYPT</option>
+                                        <option value="ACCESS_REQUEST_CREATED">ACCESS_REQUEST_CREATED</option>
+                                        <option value="ML_ANALYSIS_STARTED">ML_ANALYSIS_STARTED</option>
+                                        <option value="ML_ANALYSIS_COMPLETED">ML_ANALYSIS_COMPLETED</option>
+                                        <option value="ACCESS_REQUEST_APPROVED">ACCESS_REQUEST_APPROVED</option>
+                                        <option value="ACCESS_REQUEST_REJECTED">ACCESS_REQUEST_REJECTED</option>
+                                        <option value="FILE_DECRYPT">FILE_DECRYPT</option>
+                                        <option value="FILE_DOWNLOAD">FILE_DOWNLOAD</option>
+                                        <option value="ADMIN_FILE_DOWNLOAD">ADMIN_FILE_DOWNLOAD</option>
+                                        <option value="FILE_DELETED">FILE_DELETED</option>
+                                        <option value="STORAGE_INCONSISTENCY">STORAGE_INCONSISTENCY</option>
+                                        <option value="ADMIN_USER_ACTIVITY_VIEW">ADMIN_USER_ACTIVITY_VIEW</option>
+                                    </select>
+                                </div>
+
+                                <!-- Severity -->
+                                <div class="flex flex-col gap-1.5">
+                                    <label class="text-[10px] text-on-surface-variant/60 uppercase">Event Severity</label>
+                                    <select id="audit-filter-severity" class="input-field py-1 px-2 text-xs text-on-surface bg-[#14181f] border border-white/10 rounded focus:border-primary/50 focus:ring-0 outline-none cursor-pointer">
+                                        <option value="">ALL SEVERITIES</option>
+                                        <option value="INFO">INFO</option>
+                                        <option value="WARNING">WARNING</option>
+                                        <option value="CRITICAL">CRITICAL</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Start Date -->
+                                <div class="flex flex-col gap-1.5">
+                                    <label class="text-[10px] text-on-surface-variant/60 uppercase">Start Date</label>
+                                    <input type="date" id="audit-filter-start-date" class="input-field py-0.5 px-2 text-xs text-on-surface bg-white/02 border border-white/10 rounded focus:border-primary/50 focus:ring-0 outline-none cursor-pointer">
+                                </div>
+                                
+                                <!-- End Date -->
+                                <div class="flex flex-col gap-1.5">
+                                    <label class="text-[10px] text-on-surface-variant/60 uppercase">End Date</label>
+                                    <input type="date" id="audit-filter-end-date" class="input-field py-0.5 px-2 text-xs text-on-surface bg-white/02 border border-white/10 rounded focus:border-primary/50 focus:ring-0 outline-none cursor-pointer">
+                                </div>
+                                
+                                <!-- Controls -->
+                                <div class="flex items-end gap-2 mt-2 sm:mt-0">
+                                    <button onclick="applyAuditFilters()" class="flex-1 py-1.5 px-3 rounded bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 hover:text-white transition-all duration-150 cursor-pointer text-center font-bold uppercase">Search</button>
+                                    <button onclick="resetAuditFilters()" class="py-1.5 px-3 rounded bg-white/05 border border-white/10 text-on-surface-variant hover:bg-white/10 hover:text-white transition-all duration-150 cursor-pointer text-center font-bold uppercase">Reset</button>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Timeline Audit Log container -->
                         <div id="audit-log" class="space-y-4">
                             <div class="flex items-center justify-center py-8">
                                 <div class="loading-spinner"></div>
                                 <span class="ml-2 text-on-surface-variant font-data-mono text-xs">Synchronizing local block logs...</span>
+                            </div>
+                        </div>
+
+                        <!-- Pagination controls -->
+                        <div id="audit-pagination" class="flex justify-between items-center text-[10px] font-data-mono text-on-surface-variant/70 mt-6 p-4 glass-panel rounded border border-white/05 hidden">
+                            <span id="audit-pagination-info">Showing 0-0 of 0</span>
+                            <div class="flex gap-2">
+                                <button id="audit-prev-btn" onclick="auditPrevPage()" class="px-2.5 py-1 rounded border border-white/10 bg-white/02 hover:bg-white/05 disabled:opacity-30 disabled:pointer-events-none transition-all duration-150 cursor-pointer">PREV</button>
+                                <button id="audit-next-btn" onclick="auditNextPage()" class="px-2.5 py-1 rounded border border-white/10 bg-white/02 hover:bg-white/05 disabled:opacity-30 disabled:pointer-events-none transition-all duration-150 cursor-pointer">NEXT</button>
                             </div>
                         </div>
                     </div>
@@ -3416,131 +3507,208 @@
             }
         }
 
+        let auditLimit = 15;
+        let auditOffset = 0;
+
         async function loadBlockchainLog() {
             try {
-                const response = await fetch('/api/admin/audit_log');
-                const data = await response.json();
-                
-                // Update blockchain stats
-                document.getElementById('blockchain-total-blocks').textContent = data.total_blocks || 0;
-                
-                const validBlocksEl = document.getElementById('blockchain-valid-blocks');
-                if (validBlocksEl) {
-                    validBlocksEl.textContent = data.total_blocks || 0;
-                }
-                const integrityEl = document.getElementById('blockchain-integrity');
-                if (integrityEl) {
-                    integrityEl.textContent = 'VERIFIED';
-                }
-                
-                let lastUpdateStr = 'Unknown';
-                if (data.last_update) {
-                    let lastUpdateDate;
-                    if (!isNaN(data.last_update)) {
-                        lastUpdateDate = new Date(data.last_update * 1000);
-                    } else {
-                        lastUpdateDate = new Date(data.last_update);
-                    }
-                    lastUpdateStr = lastUpdateDate.toLocaleString();
-                }
-                document.getElementById('blockchain-last-update').textContent = lastUpdateStr;
-                
-                const logContainer = document.getElementById('audit-log');
-                if (data.chain && data.chain.length > 0) {
-                    let html = '<div class="space-y-4">';
-                    data.chain.reverse().forEach(block => {
-                        let blockDate;
-                        if (block.timestamp) {
-                            if (!isNaN(block.timestamp)) {
-                                blockDate = new Date(block.timestamp * 1000);
-                            } else {
-                                blockDate = new Date(block.timestamp);
-                            }
+                // Keep the stats update separate for backward compatibility
+                const statsResponse = await fetch('/api/admin/audit_log');
+                if (statsResponse.ok) {
+                    const statsData = await statsResponse.json();
+                    document.getElementById('blockchain-total-blocks').textContent = statsData.total_blocks || 0;
+                    const validBlocksEl = document.getElementById('blockchain-valid-blocks');
+                    if (validBlocksEl) validBlocksEl.textContent = statsData.total_blocks || 0;
+                    const integrityEl = document.getElementById('blockchain-integrity');
+                    if (integrityEl) integrityEl.textContent = 'VERIFIED';
+                    
+                    let lastUpdateStr = 'Unknown';
+                    if (statsData.last_update) {
+                        let lastUpdateDate;
+                        if (!isNaN(statsData.last_update)) {
+                            lastUpdateDate = new Date(statsData.last_update * 1000);
                         } else {
-                            blockDate = new Date();
+                            lastUpdateDate = new Date(statsData.last_update);
                         }
-                        const date = blockDate.toLocaleString();
-                        const isGenesis = block.index === 0 || block.index === 1;
-                        const dataContent = isGenesis ? "Genesis Block" : JSON.stringify(block.data);
-                        let parsedData = {};
-                        try {
-                            if (!isGenesis && typeof block.data === 'string') {
-                                parsedData = JSON.parse(block.data);
-                            } else if (!isGenesis) {
-                                parsedData = block.data;
-                            }
-                        } catch(e) {}
-                        
-                        const actionType = parsedData.action || (isGenesis ? 'SYSTEM_INIT' : 'UNKNOWN_EVENT');
-                        const user = parsedData.username || 'System';
-                        const fileId = parsedData.file_id ? `File: ${parsedData.file_id.substring(0,8)}...` : '';
-                        
-                        // Determine color based on action type
-                        let colorClass = "border-blue-500";
-                        let textClass = "text-primary";
-                        if (actionType.includes("APPROVE") || actionType.includes("UPLOAD")) {
-                            colorClass = "border-secondary";
-                            textClass = "text-secondary";
-                        } else if (actionType.includes("REJECT") || actionType.includes("FAIL")) {
-                            colorClass = "border-error";
-                            textClass = "text-error";
-                        }
-                        
-                        const blockHash = block.hash || block.block_hash || 'Unknown';
-                        
-                        html += `
-                            <div class="glass-panel p-6 rounded-lg relative overflow-hidden transition-all duration-150 border-l-4 ${colorClass} hover:border-primary/40 cursor-pointer" onclick="const el = document.getElementById('blk-details-${block.index}'); el.classList.toggle('hidden');">
-                                <div class="flex justify-between items-start mb-3 flex-wrap gap-2">
-                                    <div>
-                                        <span class="${textClass} font-bold text-sm tracking-wider uppercase mr-2">${actionType}</span>
-                                        <span class="text-[10px] text-on-surface-variant/60 font-data-mono">${date}</span>
-                                    </div>
-                                    <span class="bg-white/05 text-on-surface-variant text-[10px] px-2 py-0.5 rounded font-data-mono uppercase">BLOCK #${block.index}</span>
+                        lastUpdateStr = lastUpdateDate.toLocaleString();
+                    }
+                    document.getElementById('blockchain-last-update').textContent = lastUpdateStr;
+                }
+            } catch (err) {
+                console.error("Error retrieving blockchain stats:", err);
+            }
+
+            // Perform paginated query search
+            await fetchAndRenderAuditLogs();
+        }
+
+        async function fetchAndRenderAuditLogs() {
+            const query = document.getElementById('audit-filter-query').value;
+            const username = document.getElementById('audit-filter-username').value;
+            const admin = document.getElementById('audit-filter-admin').value;
+            const action = document.getElementById('audit-filter-action').value;
+            const severity = document.getElementById('audit-filter-severity').value;
+            const startDate = document.getElementById('audit-filter-start-date').value;
+            const endDate = document.getElementById('audit-filter-end-date').value;
+
+            const logContainer = document.getElementById('audit-log');
+            logContainer.innerHTML = `
+                <div class="flex items-center justify-center py-8">
+                    <div class="loading-spinner"></div>
+                    <span class="ml-2 text-on-surface-variant font-data-mono text-xs">Querying audit trail logs...</span>
+                </div>
+            `;
+
+            const params = new URLSearchParams();
+            if (query) params.append('query', query);
+            if (username) params.append('username', username);
+            if (admin) params.append('admin', admin);
+            if (action) params.append('action', action);
+            if (severity) params.append('severity', severity);
+            if (startDate) params.append('start_date', startDate);
+            if (endDate) params.append('end_date', endDate);
+            params.append('limit', auditLimit);
+            params.append('offset', auditOffset);
+
+            try {
+                const res = await fetch(`/api/admin/audit?${params.toString()}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+
+                const data = await res.json();
+                const activities = data.activities || [];
+                const pagination = data.pagination || { total: 0, limit: auditLimit, offset: auditOffset, has_more: false };
+
+                const paginationPanel = document.getElementById('audit-pagination');
+
+                if (activities.length === 0) {
+                    logContainer.innerHTML = '<div class="text-center p-6 text-gray-500 font-data-mono text-xs">No matching audit logs found</div>';
+                    paginationPanel.classList.add('hidden');
+                    return;
+                }
+
+                let html = '<div class="space-y-4">';
+                activities.forEach((act, idx) => {
+                    const blockIndex = pagination.total - pagination.offset - idx;
+                    const dateStr = act.timestamp ? new Date(act.timestamp).toLocaleString() : 'Unknown';
+                    const actType = act.action || 'UNKNOWN_EVENT';
+                    const user = act.username || act.admin || 'System';
+                    
+                    const sev = act.severity || 'INFO';
+                    let sevColor = 'bg-primary/10 border-primary/20 text-primary';
+                    let borderLeftColor = 'border-l-primary';
+                    
+                    if (sev === 'CRITICAL') {
+                        sevColor = 'bg-error/15 border-error/35 text-error';
+                        borderLeftColor = 'border-l-error';
+                    } else if (sev === 'WARNING') {
+                        sevColor = 'bg-warning/15 border-warning/35 text-warning';
+                        borderLeftColor = 'border-l-warning';
+                    }
+
+                    const detailsId = `audit-details-${pagination.offset}-${idx}`;
+
+                    html += `
+                        <div class="glass-panel p-6 rounded-lg relative overflow-hidden transition-all duration-150 border-l-4 ${borderLeftColor} hover:border-primary/40 cursor-pointer" onclick="document.getElementById('${detailsId}').classList.toggle('hidden');">
+                            <div class="flex justify-between items-start mb-3 flex-wrap gap-2">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="text-on-surface font-bold text-sm tracking-wider uppercase">${SecurityUtils.sanitize(actType)}</span>
+                                    <span class="status-badge ${sevColor} px-2 py-0.5 text-[9px] font-bold uppercase rounded border">${sev}</span>
+                                    <span class="text-[10px] text-on-surface-variant/60 font-data-mono">${dateStr}</span>
                                 </div>
-                                <div class="text-xs text-on-surface-variant/80 mb-3 font-data-mono">
-                                    Operator: <span class="font-bold text-on-surface">${SecurityUtils.sanitize(user)}</span> ${fileId ? ` • Asset ID: <span class="text-primary font-bold">${parsedData.file_id || ''}</span>` : ''}
-                                </div>
-                                <div class="flex flex-col gap-2 font-data-mono text-[10px]">
-                                    <div class="flex justify-between items-center bg-white/02 p-2 rounded border border-white/05 gap-4">
-                                        <span class="text-on-surface-variant/50">HASH:</span>
-                                        <div class="flex items-center gap-1.5 min-w-0">
-                                            <span class="text-on-surface select-all truncate font-bold">${blockHash.substring(0, 16)}...</span>
-                                            <button onclick="event.stopPropagation(); navigator.clipboard.writeText('${blockHash}'); this.querySelector('span').textContent = 'check'; setTimeout(() => this.querySelector('span').textContent = 'content_copy', 1500);" class="text-on-surface-variant hover:text-primary transition-all p-0.5 cursor-pointer">
-                                                <span class="material-symbols-outlined text-xs">content_copy</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Expandable Hash Detail -->
-                                <div id="blk-details-${block.index}" class="hidden mt-4 pt-4 border-t border-white/05 flex flex-col gap-3 font-data-mono text-[10px] text-on-surface-variant/80">
-                                    <div class="flex flex-col gap-1">
-                                        <span class="text-on-surface-variant/40">FULL BLOCK HASH</span>
-                                        <span class="text-on-surface font-bold break-all">${blockHash}</span>
-                                    </div>
-                                    <div class="flex flex-col gap-1">
-                                        <span class="text-on-surface-variant/40">PREVIOUS HASH</span>
-                                        <span class="text-on-surface font-bold break-all">${block.previous_hash || '0'}</span>
-                                    </div>
-                                    ${parsedData.hash_algorithm ? `
-                                        <div class="flex flex-col gap-1">
-                                            <span class="text-on-surface-variant/40">HASH ALGORITHM</span>
-                                            <span class="text-on-surface font-bold">${parsedData.hash_algorithm}</span>
-                                        </div>
-                                    ` : ''}
+                                <span class="bg-white/05 text-on-surface-variant text-[10px] px-2 py-0.5 rounded font-data-mono uppercase">RECORD</span>
+                            </div>
+                            <div class="text-xs text-on-surface-variant/80 mb-3 font-data-mono">
+                                Operator: <span class="font-bold text-on-surface">${SecurityUtils.sanitize(user)}</span>
+                                ${act.filename ? ` • Asset: <span class="text-primary font-bold">${SecurityUtils.sanitize(act.filename)}</span>` : ''}
+                            </div>
+                            <div class="flex flex-col gap-2 font-data-mono text-[10px]">
+                                <div class="flex justify-between items-center bg-white/02 p-2 rounded border border-white/05 gap-4">
+                                    <span class="text-on-surface-variant/50">DETAILS:</span>
+                                    <span class="text-on-surface truncate max-w-md font-bold">${SecurityUtils.sanitize(act.details || '')}</span>
                                 </div>
                             </div>
-                        `;
-                    });
-                    html += '</div>';
-                    logContainer.innerHTML = html;
-                } else {
-                    logContainer.innerHTML = '<div class="text-center p-6 text-gray-500">No blockchain data available</div>';
-                }
-            } catch (error) {
-                console.error('Error loading blockchain log:', error);
-                document.getElementById('audit-log').innerHTML = `<div class="text-red-400 p-4 bg-red-900/20 rounded border border-red-500/30">Error: ${SecurityUtils.sanitize(error.message)}</div>`;
+                            
+                            <!-- Expandable Detail -->
+                            <div id="${detailsId}" class="hidden mt-4 pt-4 border-t border-white/05 flex flex-col gap-3 font-data-mono text-[10px] text-on-surface-variant/80">
+                                ${act.details ? `
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-on-surface-variant/40">FULL LOG MESSAGE</span>
+                                        <span class="text-on-surface font-bold whitespace-pre-wrap">${SecurityUtils.sanitize(act.details)}</span>
+                                    </div>
+                                ` : ''}
+                                ${act.request_id ? `
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-on-surface-variant/40">REQUEST ID</span>
+                                        <span class="text-on-surface font-bold">${SecurityUtils.sanitize(act.request_id)}</span>
+                                    </div>
+                                ` : ''}
+                                ${act.file_id ? `
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-on-surface-variant/40">FILE ID</span>
+                                        <span class="text-on-surface font-bold">${SecurityUtils.sanitize(act.file_id)}</span>
+                                    </div>
+                                ` : ''}
+                                ${act.metadata ? `
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-on-surface-variant/40">METADATA</span>
+                                        <pre class="bg-black/20 p-2 rounded text-on-surface text-[9px] font-bold overflow-x-auto">${SecurityUtils.sanitize(JSON.stringify(act.metadata, null, 2))}</pre>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                logContainer.innerHTML = html;
+
+                const total = pagination.total || 0;
+                const start = total === 0 ? 0 : pagination.offset + 1;
+                const end = Math.min(total, pagination.offset + activities.length);
+
+                document.getElementById('audit-pagination-info').textContent = `Showing ${start}-${end} of ${total}`;
+
+                const prevBtn = document.getElementById('audit-prev-btn');
+                const nextBtn = document.getElementById('audit-next-btn');
+
+                prevBtn.disabled = (pagination.offset === 0);
+                nextBtn.disabled = !pagination.has_more;
+
+                paginationPanel.classList.remove('hidden');
+
+            } catch (err) {
+                console.error("Failed to fetch and render audit logs:", err);
+                logContainer.innerHTML = `<div class="text-red-400 p-4 bg-red-900/20 rounded border border-red-500/30">Error querying audit: ${SecurityUtils.sanitize(err.message)}</div>`;
+                paginationPanel.classList.add('hidden');
             }
+        }
+
+        function applyAuditFilters() {
+            auditOffset = 0;
+            fetchAndRenderAuditLogs();
+        }
+
+        function resetAuditFilters() {
+            document.getElementById('audit-filter-query').value = '';
+            document.getElementById('audit-filter-username').value = '';
+            document.getElementById('audit-filter-admin').value = '';
+            document.getElementById('audit-filter-action').value = '';
+            document.getElementById('audit-filter-severity').value = '';
+            document.getElementById('audit-filter-start-date').value = '';
+            document.getElementById('audit-filter-end-date').value = '';
+            auditOffset = 0;
+            fetchAndRenderAuditLogs();
+        }
+
+        function auditPrevPage() {
+            if (auditOffset >= auditLimit) {
+                auditOffset -= auditLimit;
+                fetchAndRenderAuditLogs();
+            }
+        }
+
+        function auditNextPage() {
+            auditOffset += auditLimit;
+            fetchAndRenderAuditLogs();
         }
 
         async function approveRequest(requestId) {

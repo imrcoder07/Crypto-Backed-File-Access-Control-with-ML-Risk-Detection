@@ -1,7 +1,8 @@
 import logging
 import json
 from modules.celery_app import celery_instance
-from modules.extensions import ml_analyzer, audit_ledger
+from modules.extensions import ml_analyzer
+from modules.audit_utils import log_event
 from modules import db
 
 logger = logging.getLogger(__name__)
@@ -15,6 +16,11 @@ def run_ml_analysis(self, req_id: str, file_id: str, filename: str, features: di
     try:
         logger.info(f"Background Job: Setting request status to 'processing' for {req_id}...")
         db.update_request_status_only(req_id, "processing")
+        log_event(
+            action="ML_ANALYSIS_STARTED",
+            request_id=req_id,
+            details=f"ML analysis started for request: {req_id}"
+        )
     except Exception as db_err:
         logger.error(f"Background Job: Failed to set request status to 'processing': {db_err}", exc_info=True)
         # We can still proceed to scan even if status update failed, or retry
@@ -49,9 +55,21 @@ def run_ml_analysis(self, req_id: str, file_id: str, filename: str, features: di
         if not updated:
             raise RuntimeError(f"Could not find request record {req_id} in database to update.")
         
+        log_event(
+            action="ML_ANALYSIS_COMPLETED",
+            request_id=req_id,
+            details=f"ML analysis completed successfully for request: {req_id}"
+        )
+        
         # 4. Add to Cryptographic Ledger
         logger.info(f"Background Job: Emitting cryptographic ledger transaction event...")
-        audit_ledger.add_event(f"User '{username}' uploaded file: {filename} (ID: {file_id})")
+        log_event(
+            action="FILE_UPLOAD",
+            username=username,
+            file_id=file_id,
+            filename=filename,
+            details=f"User uploaded file: {filename} (ID: {file_id})"
+        )
         db.log_activity(username, "file_upload", f"File: {filename}")
         
         logger.info(f"Background Job: ML Analysis complete for request {req_id}.")

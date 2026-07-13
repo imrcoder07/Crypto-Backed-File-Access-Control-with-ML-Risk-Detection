@@ -627,6 +627,16 @@ The system underwent a comprehensive security hardening, frontend restoration, a
 - **Spelling & Terminology Audit:** Audited and corrected 17 occurrences of the spelling typo `Isolation Forestst` to `Isolation Forest`, corrected `ASANSOL ENGINEERING COLLAGE` to `ASANSOL ENGINEERING COLLEGE`, and aligned figure captions with their respective list indices.
 - **Dynamic Field Refresh:** Embedded the `w:updateFields` Word settings property to prompt automatic index and page-number refreshes on startup.
 
+### 3. Phase 4 — Admin Per-User Activity Inspection
+- **Admin-Gated activity inspection:** Added collapsible slide-out drawer on the Admin Users view to query individual user activities securely via `GET /api/admin/user_activity`.
+- **Admin Audit Trail View Logging:** Accessing an operator's activity history automatically enqueues `ADMIN_USER_ACTIVITY_VIEW` structured event blocks on the blockchain ledger.
+
+### 4. Phase 5 — Audit Search & Investigation
+- **Unified Query API:** Unified searching, filtering, and paging of mixed ledger blocks (legacy plaintext + structured JSON) via `GET /api/admin/audit`.
+- **AuditQueryService Layer:** Decoupled searching and normalization from controllers. Features case-insensitive free-text matching across details/username/admin/filename/request_id fields.
+- **Severity Mapping:** Centralized severity mappings to associate events dynamically to `INFO`, `WARNING`, or `CRITICAL` levels on the backend.
+- **Lite Performance Instrumentation:** Logs query performance execution duration and matched record statistics at the `INFO` level.
+
 ---
 
 ## 🔮 Future Enhancements
