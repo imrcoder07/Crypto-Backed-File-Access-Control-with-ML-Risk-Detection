@@ -2,7 +2,7 @@ import os
 import threading
 import time
 import logging
-from flask import Flask, Response
+from flask import Flask, Response, send_from_directory
 from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
 
@@ -39,7 +39,12 @@ app.wsgi_app = ProxyFix(
 
 @app.route('/favicon.ico')
 def favicon():
-    return Response(status=204)
+    return send_from_directory(
+        os.path.join(app.root_path, 'static', 'images'),
+        'favicon.ico',
+        mimetype='image/x-icon',
+        max_age=604800  # cache for 7 days
+    )
 
 # Security Hardening: Enforce 12-Factor App secrets and secure sessions
 secret_key = os.environ.get("SECRET_KEY")
